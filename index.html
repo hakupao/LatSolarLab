@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LatSolar - 计算地球上任意位置在任意日期接收的太阳辐射量">
+    <title>LatSolar - 纬度太阳辐射计算器</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- 3D地球依赖库 -->
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+</head>
+
+<body>
+    <!-- 3D地球容器 (背景) -->
+    <div id="globe-container"></div>
+
+    <!-- 语言切换按钮 -->
+    <div class="language-toggle">
+        <button id="lang-toggle" class="lang-btn" title="Switch Language / 切换语言">
+            <span class="lang-icon">🌐</span>
+            <span id="lang-text">English</span>
+        </button>
+    </div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header>
+            <div class="header-icon">☀️</div>
+            <h1 data-i18n="title">LatSolar</h1>
+            <p class="subtitle" data-i18n="description">计算地球上任意位置接收的太阳辐射量</p>
+        </header>
+
+        <!-- 输入表单 -->
+        <div class="card">
+            <h2 class="card-title" data-i18n="inputTitle">📍 输入位置和日期</h2>
+
+            <form id="calculator-form">
+                <!-- 城市搜索 -->
+                <div class="city-search-container">
+                    <label for="city-search" data-i18n="citySearch">🔍 搜索城市</label>
+                    <div class="city-search-wrapper">
+                        <input type="text" id="city-search" placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
+                        <div id="city-suggestions" class="city-suggestions"></div>
+                    </div>
+                    <small style="color: var(--color-text-muted); margin-top: 0.25rem; display: block;">
+                        <span data-i18n="citySearchHint">选择城市后将自动填充坐标</span>
+                    </small>
+                </div>
+
+                <!-- 坐标格式切换和最近城市显示 -->
+                <div class="coordinate-controls">
+                    <div class="nearest-city" id="nearest-city-display">
+                        <span class="nearest-city-icon">📍</span>
+                        <span id="nearest-city-text" data-i18n="nearestCity">输入坐标后显示最近城市</span>
+                    </div>
+                    <button type="button" id="format-toggle" class="format-toggle" title="切换坐标格式">
+                        <span id="format-icon">🔄</span>
+                        <span id="format-text" data-i18n="formatToggleToDMS">切换为度分秒</span>
+                    </button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="latitude">纬度 (°)</label>
+                        <input type="number" id="latitude" name="latitude" step="0.0001" min="-90" max="90"
+                            data-i18n="citySearchPlaceholder" placeholder="输入城市名称 (中文或英文)..." required>
+                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;">
+                            范围: -90° (南极) 到 90° (北极)
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="longitude">经度 (°)</label>
+                        <input type="number" id="longitude" name="longitude" step="0.0001" min="-180" max="180"
+                            placeholder="例: 139.65" required>
+                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;">
+                            范围: -180° 到 180°
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">日期</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                </div>
+
+                <!-- 错误信息 -->
+                <div id="error-message" class="error-message"></div>
+
+                <!-- 计算按钮 -->
+                <button type="submit" id="calculate-btn" class="btn btn-primary" data-i18n="calculate">
+                    计算
+                </button>
+
+                <!-- 快速示例 -->
+                <div class="examples">
+                    <p class="examples-title" data-i18n="examplesTitle">快速示例:</p>
+                    <div class="example-buttons">
+                        <button type="button" class="example-btn" data-lat="35.0" data-lon="139.65">
+                            🗾 横滨 (35°N)
+                        </button>
+                        <button type="button" class="example-btn" data-lat="0" data-lon="0">
+                            🌍 赤道
+                        </button>
+                        <button type="button" class="example-btn" data-lat="66.5" data-lon="25.7">
+                            🌌 北极圈
+                        </button>
+                        <button type="button" class="example-btn" data-lat="-66.5" data-lon="0">
+                            🐧 南极圈
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 结果显示 -->
+        <div id="results">
+            <div class="card">
+                <h2 class="card-title">📊 计算结果</h2>
+
+                <div class="result-header">
+                    <div class="result-location" id="result-location"></div>
+                    <div class="result-date" id="result-date"></div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-label">日序数</div>
+                        <div class="result-value" id="result-day">-</div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">太阳赤纬角 (δ)</div>
+                        <div class="result-value" id="result-declination">-</div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">日照时长</div>
+                        <div class="result-value" id="result-daylight">-</div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">TOA 日总辐射 (H)</div>
+                        <div class="result-value highlight" id="result-toa">-</div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">净吸收辐射 (F<sub>in</sub>)</div>
+                        <div class="result-value highlight" id="result-net">-</div>
+                    </div>
+                </div>
+
+                <div class="seasonal-hint" id="seasonal-hint"></div>
+            </div>
+        </div>
+
+        <!-- 公式参考 -->
+        <div class="card formula-reference">
+            <h3>📐 计算公式参考</h3>
+
+            <div class="formula-item">
+                <strong>太阳赤纬角:</strong><br>
+                <code>δ = 23.45° × sin(360° × (284 + n) / 365)</code>
+            </div>
+
+            <div class="formula-item">
+                <strong>日出/日落时角:</strong><br>
+                <code>cos(ω) = -tan(φ) × tan(δ)</code>
+            </div>
+
+            <div class="formula-item">
+                <strong>日照时长:</strong><br>
+                <code>T = 2ω × 24 / (2π) 小时</code>
+            </div>
+
+            <div class="formula-item">
+                <strong>日总辐射 (TOA):</strong><br>
+                <code>H = (S₀/π) × (1 + 0.033cos(360n/365)) × [ω×sin(φ)sin(δ) + cos(φ)cos(δ)sin(ω)]</code>
+            </div>
+
+            <div class="formula-item">
+                <strong>净吸收辐射:</strong><br>
+                <code>F<sub>in</sub> = k × H</code> (k ≈ 0.55)
+            </div>
+
+            <div
+                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 0.875rem;">
+                <p><strong>说明:</strong></p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                    <li>S₀ = 1367 W/m² (太阳常数)</li>
+                    <li>φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数</li>
+                    <li>TOA = Top of Atmosphere (大气顶层)</li>
+                    <li>k = 有效吸收因子,考虑大气散射、云反射、地表反照率等综合效应</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <footer>
+            <p>基于简化的能量收支模型 | 数据仅供参考</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">
+                © 2025 LatSolarLab
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="i18n.js"></script>
+    <script src="cities.js"></script>
+    <script src="calculator.js"></script>
+    <script src="globe.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

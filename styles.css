@@ -1,0 +1,660 @@
+/**
+ * 太阳辐射计算器 - 样式表
+ * 现代化深色主题设计
+ */
+
+/* 导入 Google 字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 全局重置和变量 */
+:root {
+    /* 颜色主题 - 太阳和天空 */
+    --color-bg-dark: #0a0e27;
+    --color-bg-card: rgba(255, 255, 255, 0.05);
+    --color-bg-input: rgba(255, 255, 255, 0.08);
+    --color-border: rgba(255, 255, 255, 0.1);
+
+    --color-primary: #ff9500;
+    --color-primary-light: #ffb340;
+    --color-secondary: #ffd60a;
+    --color-accent: #00d4ff;
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(255, 255, 255, 0.7);
+    --color-text-muted: rgba(255, 255, 255, 0.5);
+
+    --color-success: #30d158;
+    --color-error: #ff453a;
+
+    /* 渐变 */
+    --gradient-sun: linear-gradient(135deg, #ff9500 0%, #ffd60a 100%);
+    --gradient-sky: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 100%);
+    --gradient-card: linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%);
+
+    /* 间距 */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+
+    /* 圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    /* 阴影 */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 20px rgba(255, 149, 0, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--color-bg-dark);
+    /* 纯色背景,让地球背景负责渐变 */
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding: 0;
+    overflow-x: hidden;
+    position: relative;
+    display: flex;
+}
+
+/* 3D地球容器 */
+#globe-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 60%;
+    height: 100vh;
+    z-index: 0;
+    background: radial-gradient(70% 70% at 80% 20%, rgba(56, 189, 248, 0.12), rgba(8, 15, 30, 0.9));
+}
+
+/* 容器 (左侧面板) */
+.container {
+    width: 40%;
+    min-width: 450px;
+    max-width: 600px;
+    margin: 0;
+    padding: var(--spacing-md);
+    background: rgba(10, 14, 39, 0.85);
+    /* 半透明背景 */
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    min-height: 100vh;
+    border-right: 1px solid var(--color-border);
+    position: relative;
+}
+
+/* 语言切换按钮 */
+.language-toggle {
+    position: fixed;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    z-index: 1000;
+}
+
+.lang-btn {
+    background: var(--color-bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.625rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.lang-icon {
+    font-size: 1.1rem;
+}
+
+#lang-text {
+    font-weight: 500;
+}
+
+
+
+/* 头部 */
+header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg) 0;
+}
+
+.header-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-sm);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--gradient-sun);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* 卡片 */
+.card {
+    background: var(--color-bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 149, 0, 0.3);
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary-light);
+}
+
+/* 表单 */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+input[type="number"],
+input[type="date"],
+input[type="text"] {
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+}
+
+input[type="number"]::placeholder,
+input[type="text"]::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* 城市搜索 */
+.city-search-container {
+    margin-bottom: var(--spacing-md);
+}
+
+.city-search-wrapper {
+    position: relative;
+}
+
+#city-search {
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    transition: all 0.3s ease;
+    font-family: inherit;
+    width: 100%;
+}
+
+#city-search:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+}
+
+#city-search::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* 城市建议下拉列表 */
+.city-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+    display: none;
+}
+
+.city-suggestions.active {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.suggestion-city-name {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.suggestion-city-info {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* 坐标控制区域 */
+.coordinate-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    flex-wrap: wrap;
+}
+
+/* 最近城市显示 */
+.nearest-city {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    flex: 1;
+    min-width: 200px;
+}
+
+.nearest-city-icon {
+    font-size: 1.2rem;
+}
+
+#nearest-city-text {
+    font-weight: 500;
+}
+
+/* 格式切换按钮 */
+.format-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: inherit;
+}
+
+.format-toggle:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+#format-icon {
+    font-size: 1rem;
+}
+
+
+/* 按钮 */
+.btn {
+    background: var(--gradient-sun);
+    color: var(--color-bg-dark);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    font-family: inherit;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    width: 100%;
+}
+
+/* 示例按钮 */
+.examples {
+    margin-top: var(--spacing-md);
+}
+
+.examples-title {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.example-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.example-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.example-btn:hover {
+    background: rgba(255, 149, 0, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary-light);
+}
+
+/* 错误信息 */
+.error-message {
+    background: rgba(255, 69, 58, 0.1);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+    color: var(--color-error);
+    margin-bottom: var(--spacing-md);
+    display: none;
+}
+
+/* 结果区域 */
+#results {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.result-location {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-primary-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+.result-date {
+    color: var(--color-text-secondary);
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.result-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.result-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.result-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xs);
+}
+
+.result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.result-value.highlight {
+    background: var(--gradient-sun);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.seasonal-hint {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--gradient-card);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+}
+
+/* 公式参考 */
+.formula-reference {
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 3px solid var(--color-accent);
+}
+
+.formula-reference h3 {
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-md);
+}
+
+.formula-item {
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+}
+
+.formula-item strong {
+    color: var(--color-primary-light);
+}
+
+.formula-item code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--color-accent);
+}
+
+/* 页脚 */
+footer {
+    text-align: center;
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg) 0;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .example-buttons {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .format-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .language-toggle {
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+    }
+
+    .lang-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* 平滑滚动 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 搜索结果加载和来源标记 */
+.suggestion-loading {
+    padding: 1rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.suggestion-loading.error {
+    color: #ef4444;
+}
+
+.badge-source {
+    display: inline-block;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    vertical-align: middle;
+}
+
+/* 选中文本样式 */
+::selection {
+    background: var(--color-primary);
+    color: var(--color-bg-dark);
+}

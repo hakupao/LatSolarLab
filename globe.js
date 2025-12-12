@@ -1,0 +1,84 @@
+/**
+ * 3D 地球可视化逻辑
+ * 基于 Globe.gl 和 Three.js
+ */
+
+let world;
+let globeContainer;
+
+document.addEventListener('DOMContentLoaded', function () {
+    initGlobe();
+});
+
+function initGlobe() {
+    globeContainer = document.getElementById('globe-container');
+    // 使用半透明贴图：轻度纹理辅助定位，但整体以线框为主
+    const translucentEarth = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+
+    // 初始化地球
+    world = Globe()
+        (globeContainer)
+        .globeImageUrl(translucentEarth)
+        .backgroundColor('#0a1020')
+        .showAtmosphere(true) // 气辉用于轮廓
+        .pointOfView({ lat: 35.6762, lng: 139.6503, altitude: 2.5 }, 1000);
+
+    // ===== 禁用交互 =====
+    const controls = world.controls();
+    if (controls) {
+        controls.enableZoom = false;
+        controls.enableRotate = false;
+        controls.enablePan = false;
+    }
+
+    // 设置容器大小随窗口变化
+    window.addEventListener('resize', () => {
+        world.width(globeContainer.clientWidth);
+        world.height(globeContainer.clientHeight);
+    });
+
+    // 初始调整大小
+    setTimeout(() => {
+        world.width(globeContainer.clientWidth);
+        world.height(globeContainer.clientHeight);
+
+    }, 100);
+}
+
+/**
+ * 将地球聚焦到指定位置
+ * @param {number} lat - 纬度
+ * @param {number} lon - 经度
+ * @param {string} [label] - 标记文本
+ */
+function focusOnLocation(lat, lon, label) {
+    if (!world) return;
+
+    // 添加标记数据
+    const markerData = [{
+        lat: lat,
+        lng: lon,
+        color: '#ff9500',
+        radius: 0.5,
+        label: label || 'Location'
+    }];
+
+    // 更新标记环
+    world
+        .ringsData(markerData)
+        .ringColor(() => '#ff9500')
+        .ringMaxRadius(5)
+        .ringPropagationSpeed(5)
+        .ringRepeatPeriod(1000);
+
+    // 平滑飞行到目标位置
+    world.pointOfView({
+        lat: lat,
+        lng: lon,
+        altitude: 1.5
+    }, 2000);
+}
+
+// 暴露给其他脚本调用
+window.focusGlobe = focusOnLocation;
+window.updateSunPosition = updateSunPosition;
