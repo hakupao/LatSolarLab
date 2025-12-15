@@ -288,7 +288,8 @@ const API_CONFIG = {
 
     // Google Geocoding API 密钥 (如果使用Google)
     // 获取方式: https://console.cloud.google.com/
-    googleApiKey: 'AIzaSyAychZpHaeJQ-XNLgsolFw9DlZP1v_4s2o', // 在这里填入你的Google API密钥
+
+    googleApiKey: (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_API_KEY) ? CONFIG.GOOGLE_API_KEY : '', // 从 config.js 读取密钥
 
     // Nominatim API配置 (免费,无需密钥)
     nominatim: {
