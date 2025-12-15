@@ -24,6 +24,21 @@ document.addEventListener('DOMContentLoaded', function () {
     let isDMSFormat = false; // 当前是否为度分秒格式
     let currentLatDMS = null;
     let currentLonDMS = null;
+    let currentMode = 'single'; // single, compare-loc, compare-date
+
+    // 对比模式元素
+    const modeOptions = document.querySelectorAll('.mode-option');
+    const locationSection2 = document.getElementById('location-section-2');
+    const dateSection2 = document.getElementById('date-section-2');
+
+    // 第二个地点的输入元素
+    const latitudeInput2 = document.getElementById('latitude-2');
+    const longitudeInput2 = document.getElementById('longitude-2');
+    const citySearchInput2 = document.getElementById('city-search-2');
+    const citySuggestions2 = document.getElementById('city-suggestions-2');
+
+    // 第二个日期输入
+    const dateInput2 = document.getElementById('date-2');
 
     // ===== 语言初始化 =====
     // 初始化语言设置
@@ -75,6 +90,59 @@ document.addEventListener('DOMContentLoaded', function () {
     // 初始化时更新最近城市
     updateNearestCity();
 
+    // ===== 模式切换逻辑 =====
+    modeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // 更新 UI 状态
+            modeOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+
+            // 更新当前模式
+            currentMode = option.dataset.mode;
+            updateFormVisibility();
+        });
+    });
+
+    function updateFormVisibility() {
+        if (currentMode === 'single') {
+            locationSection2.classList.add('hidden');
+            dateSection2.classList.add('hidden');
+            // 移除必填
+            latitudeInput2.removeAttribute('required');
+            longitudeInput2.removeAttribute('required');
+            dateInput2.removeAttribute('required');
+        } else if (currentMode === 'compare-loc') {
+            locationSection2.classList.remove('hidden');
+            dateSection2.classList.add('hidden');
+            // 设置必填
+            latitudeInput2.setAttribute('required', 'true');
+            longitudeInput2.setAttribute('required', 'true');
+            dateInput2.removeAttribute('required');
+        } else if (currentMode === 'compare-date') {
+            locationSection2.classList.add('hidden');
+            dateSection2.classList.remove('hidden');
+            // 设置必填
+            latitudeInput2.removeAttribute('required');
+            longitudeInput2.removeAttribute('required');
+            dateInput2.setAttribute('required', 'true');
+
+            // 默认设置第二个日期为明天
+            if (!dateInput2.value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                dateInput2.value = tomorrow.toISOString().split('T')[0];
+            }
+        }
+    }
+
+    // 初始化第二个城市搜索逻辑 (复用现有逻辑的简化版)
+    setupCitySearch(citySearchInput2, citySuggestions2, (city) => {
+        latitudeInput2.value = city.lat.toFixed(4);
+        longitudeInput2.value = city.lon.toFixed(4);
+        citySearchInput2.value = `${city.name} (${city.nameEn})`;
+        citySuggestions2.classList.remove('active');
+    });
+
     // 表单提交事件
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -98,13 +166,13 @@ document.addEventListener('DOMContentLoaded', function () {
         errorMessage.textContent = '';
         errorMessage.style.display = 'none';
 
-        // 获取输入值
+        // 获取输入值 (主组)
         const latitude = parseFloat(latitudeInput.value);
         const longitude = parseFloat(longitudeInput.value);
         const dateValue = new Date(dateInput.value);
 
-        // 验证输入
-        const error = validateInputs(latitude, longitude);
+        // 验证主输入
+        let error = validateInputs(latitude, longitude);
         if (error) {
             showError(error);
             return;
@@ -117,21 +185,45 @@ document.addEventListener('DOMContentLoaded', function () {
         // 延迟一点以显示加载效果
         setTimeout(() => {
             try {
-                // 执行计算
-                const result = calculateSolarRadiation(latitude, longitude, dateValue);
+                // 根据模式执行计算
+                if (currentMode === 'single') {
+                    const result = calculateSolarRadiation(latitude, longitude, dateValue);
 
-                // 3D地球联动
-                if (window.focusGlobe) {
-                    window.focusGlobe(latitude, longitude);
+                    // 3D地球联动
+                    if (window.focusGlobe) window.focusGlobe(latitude, longitude);
+                    if (window.updateSunPosition) window.updateSunPosition(dateValue);
+
+                    displayResults(result); // 单点显示
+                } else if (currentMode === 'compare-loc') {
+                    // 对比地点: 计算两组
+                    const lat2 = parseFloat(latitudeInput2.value);
+                    const lon2 = parseFloat(longitudeInput2.value);
+                    const error2 = validateInputs(lat2, lon2);
+
+                    if (error2) {
+                        throw new Error(t('location2Label') + ": " + error2);
+                    }
+
+                    const result1 = calculateSolarRadiation(latitude, longitude, dateValue);
+                    const result2 = calculateSolarRadiation(lat2, lon2, dateValue);
+
+                    // 标题: 地点1 vs 地点2
+                    const title1 = citySearchInput.value || `${latitude.toFixed(2)}°,${longitude.toFixed(2)}°`;
+                    const title2 = citySearchInput2.value || `${lat2.toFixed(2)}°,${lon2.toFixed(2)}°`;
+
+                    displayComparisonResults(result1, result2, title1, title2);
+                } else if (currentMode === 'compare-date') {
+                    // 对比日期: 计算两组
+                    const dateValue2 = new Date(dateInput2.value);
+
+                    const result1 = calculateSolarRadiation(latitude, longitude, dateValue);
+                    const result2 = calculateSolarRadiation(latitude, longitude, dateValue2);
+
+                    const dateStr1 = dateValue.toLocaleDateString();
+                    const dateStr2 = dateValue2.toLocaleDateString();
+
+                    displayComparisonResults(result1, result2, dateStr1, dateStr2);
                 }
-
-                // 更新太阳光照位置
-                if (window.updateSunPosition) {
-                    window.updateSunPosition(dateValue);
-                }
-
-                // 显示结果
-                displayResults(result);
 
                 // 显示结果区域
                 resultsSection.style.display = 'block';
@@ -155,7 +247,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // 显示计算结果
     function displayResults(results) {
         // 格式化日期
-        const dateStr = results.date.toLocaleDateString('zh-CN', {
+        const locale = currentLanguage === 'zh' ? 'zh-CN' : 'en-US';
+        const dateStr = results.date.toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -163,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 更新结果显示
         document.getElementById('result-location').textContent =
-            `纬度 ${results.latitude.toFixed(2)}°, 经度 ${results.longitude.toFixed(2)}°`;
+            `${t('latitude')} ${results.latitude.toFixed(2)}°, ${t('longitude')} ${results.longitude.toFixed(2)}°`;
         document.getElementById('result-date').textContent = dateStr;
         document.getElementById('result-day').textContent = results.dayOfYear;
 
@@ -195,6 +288,80 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 添加季节提示
         addSeasonalHint(results);
+    }
+
+    // 显示对比结果
+    function displayComparisonResults(res1, res2, label1, label2) {
+        // 清空结果区域
+        const resultsContainer = document.querySelector('.card .result-header')?.parentNode;
+        if (!resultsContainer) return;
+
+        // 渲染对比 HTML
+        resultsContainer.innerHTML = `
+            <h2 class="card-title">${t('resultsTitle')} (Comparison)</h2>
+            <div class="results-comparison-container">
+                <!-- 列 1 -->
+                <div class="comparison-column">
+                    <div class="comparison-header">${label1}</div>
+                    ${renderComparisonItem(res1, res2, 'daylight', t('daylightHours'), t('hours'))}
+                    ${renderComparisonItem(res1, res2, 'toa', t('toaRadiation'), 'W/m²')}
+                    ${renderComparisonItem(res1, res2, 'net', t('netAbsorption'), 'W/m²')}
+                    
+                    <div class="comparison-item" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
+                        <div class="comparison-label">${t('solarDeclination')}</div>
+                        <div class="comparison-value">${res1.declination.toFixed(2)}°</div>
+                    </div>
+                </div>
+
+                <!-- 列 2 -->
+                <div class="comparison-column">
+                    <div class="comparison-header">${label2}</div>
+                    ${renderComparisonItem(res2, res1, 'daylight', t('daylightHours'), t('hours'))}
+                    ${renderComparisonItem(res2, res1, 'toa', t('toaRadiation'), 'W/m²')}
+                    ${renderComparisonItem(res2, res1, 'net', t('netAbsorption'), 'W/m²')}
+                    
+                    <div class="comparison-item" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
+                        <div class="comparison-label">${t('solarDeclination')}</div>
+                        <div class="comparison-value">${res2.declination.toFixed(2)}°</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                 <button onclick="window.location.reload()" class="btn" style="width: auto; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.1); font-size: 0.9rem;">
+                    Back to Single View
+                 </button>
+            </div>
+        `;
+    }
+
+    function renderComparisonItem(primary, secondary, type, label, unit) {
+        let val1, val2;
+
+        if (type === 'daylight') {
+            val1 = primary.daylight;
+            val2 = secondary.daylight;
+        } else if (type === 'toa') {
+            val1 = primary.toaRadiation;
+            val2 = secondary.toaRadiation;
+        } else {
+            val1 = primary.netAbsorption;
+            val2 = secondary.netAbsorption;
+        }
+
+        const diff = val1 - val2;
+        let diffColor = diff > 0 ? '#30d158' : (diff < 0 ? '#ff453a' : '#888');
+        let diffIcon = diff > 0 ? '▲' : (diff < 0 ? '▼' : '-');
+
+        return `
+            <div class="comparison-item">
+                <div class="comparison-label">${label}</div>
+                <div class="comparison-value highlight">${val1.toFixed(2)} ${unit}</div>
+                <div style="color: ${diffColor}; font-size: 0.8rem; margin-top: 0.2rem;">
+                    ${diffIcon} ${Math.abs(diff).toFixed(2)}
+                </div>
+            </div>
+        `;
     }
 
     // 添加季节性提示
@@ -260,69 +427,76 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== 位置功能 =====
 
-    // 城市搜索输入事件 (带防抖)
-    let searchTimeout;
-    citySearchInput.addEventListener('input', function () {
-        const query = this.value.trim();
+    // 封装搜索逻辑为通用函数
+    function setupCitySearch(inputElement, suggestionsElement, onSelectCallback) {
+        let timeout;
 
-        // 清除之前的定时器
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
+        inputElement.addEventListener('input', function () {
+            const query = this.value.trim();
 
-        if (query.length === 0) {
-            citySuggestions.classList.remove('active');
-            citySuggestions.innerHTML = '';
-            return;
-        }
+            if (timeout) clearTimeout(timeout);
 
-        // 设置防抖,延迟 500ms 执行搜索
-        searchTimeout = setTimeout(async function () {
-            // 显示加载状态
-            citySuggestions.innerHTML = `<div class="suggestion-loading">${t('searching')}</div>`;
-            citySuggestions.classList.add('active');
-
-            try {
-                // 使用混合搜索 (本地 + API)
-                const results = await searchCitiesHybrid(query);
-
-                if (results.length === 0) {
-                    citySuggestions.innerHTML = `<div class="suggestion-loading">${t('noResults')}</div>`;
-                    // 3秒后隐藏
-                    setTimeout(() => {
-                        if (citySuggestions.innerHTML.includes(t('noResults'))) {
-                            citySuggestions.classList.remove('active');
-                        }
-                    }, 3000);
-                    return;
-                }
-
-                // 显示建议列表
-                citySuggestions.innerHTML = '';
-                results.forEach(city => {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-
-                    // 标记来源
-                    const sourceTag = city.source === 'google' ? ` <span class="badge-source">${t('sourceGoogle')}</span>` :
-                        (city.source === 'nominatim' ? ` <span class="badge-source">${t('sourceOSM')}</span>` : '');
-
-                    item.innerHTML = `
-                        <div class="suggestion-city-name">${city.name} / ${city.nameEn}${sourceTag}</div>
-                        <div class="suggestion-city-info">${city.country} · ${city.lat.toFixed(2)}°, ${city.lon.toFixed(2)}°</div>
-                    `;
-
-                    item.addEventListener('click', function () {
-                        selectCity(city);
-                    });
-
-                    citySuggestions.appendChild(item);
-                });
-            } catch (error) {
-                console.error('Search error:', error);
-                citySuggestions.innerHTML = `<div class="suggestion-loading error">${t('errorPrefix')}${error.message}</div>`;
+            if (query.length === 0) {
+                suggestionsElement.classList.remove('active');
+                suggestionsElement.innerHTML = '';
+                return;
             }
-        }, 500); // 500ms 延迟
+
+            // 设置防抖
+            timeout = setTimeout(async function () {
+                suggestionsElement.innerHTML = `<div class="suggestion-loading">${t('searching')}</div>`;
+                suggestionsElement.classList.add('active');
+
+                try {
+                    const results = await searchCitiesHybrid(query);
+
+                    if (results.length === 0) {
+                        suggestionsElement.innerHTML = `<div class="suggestion-loading">${t('noResults')}</div>`;
+                        setTimeout(() => {
+                            if (suggestionsElement.innerHTML.includes(t('noResults'))) {
+                                suggestionsElement.classList.remove('active');
+                            }
+                        }, 3000);
+                        return;
+                    }
+
+                    suggestionsElement.innerHTML = '';
+                    results.forEach(city => {
+                        const item = document.createElement('div');
+                        item.className = 'suggestion-item';
+
+                        const sourceTag = city.source === 'google' ? ` <span class="badge-source">${t('sourceGoogle')}</span>` :
+                            (city.source === 'nominatim' ? ` <span class="badge-source">${t('sourceOSM')}</span>` : '');
+
+                        item.innerHTML = `
+                            <div class="suggestion-city-name">${city.name} / ${city.nameEn}${sourceTag}</div>
+                            <div class="suggestion-city-info">${city.country} · ${city.lat.toFixed(2)}°, ${city.lon.toFixed(2)}°</div>
+                        `;
+
+                        item.addEventListener('click', function () {
+                            onSelectCallback(city);
+                        });
+
+                        suggestionsElement.appendChild(item);
+                    });
+                } catch (error) {
+                    console.error('Search error:', error);
+                    suggestionsElement.innerHTML = `<div class="suggestion-loading error">${t('errorPrefix')}${error.message}</div>`;
+                }
+            }, 500);
+        });
+
+        // 点击外部关闭
+        document.addEventListener('click', function (e) {
+            if (!inputElement.contains(e.target) && !suggestionsElement.contains(e.target)) {
+                suggestionsElement.classList.remove('active');
+            }
+        });
+    }
+
+    // 初始化主搜索框
+    setupCitySearch(citySearchInput, citySuggestions, (city) => {
+        selectCity(city);
     });
 
     // 点击外部关闭建议列表

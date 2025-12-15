@@ -16,6 +16,12 @@ const translations = {
 
         // 输入表单
         inputTitle: "📍 输入位置和日期",
+        modeSingle: "单点计算",
+        modeCompareLoc: "对比地点",
+        modeCompareDate: "对比日期",
+        location1Label: "📍 地点 1",
+        location2Label: "📍 地点 2 (对比)",
+        date2Label: "📅 日期 2 (对比)",
         citySearch: "🔍 搜索城市",
         citySearchPlaceholder: "输入城市名称 (中文或英文)...",
         citySearchHint: "选择城市后将自动填充坐标",
@@ -118,6 +124,12 @@ const translations = {
 
         // Input form
         inputTitle: "📍 Enter Location and Date",
+        modeSingle: "Single Point",
+        modeCompareLoc: "Compare Locations",
+        modeCompareDate: "Compare Dates",
+        location1Label: "📍 Location 1",
+        location2Label: "📍 Location 2 (Compare)",
+        date2Label: "📅 Date 2 (Compare)",
         citySearch: "🔍 Search City",
         citySearchPlaceholder: "Enter city name (Chinese or English)...",
         citySearchHint: "Coordinates will be auto-filled after selecting a city",

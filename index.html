@@ -39,53 +39,105 @@
             <h2 class="card-title" data-i18n="inputTitle">📍 输入位置和日期</h2>
 
             <form id="calculator-form">
-                <!-- 城市搜索 -->
-                <div class="city-search-container">
-                    <label for="city-search" data-i18n="citySearch">🔍 搜索城市</label>
-                    <div class="city-search-wrapper">
-                        <input type="text" id="city-search" data-i18n="citySearchPlaceholder"
-                            placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
-                        <div id="city-suggestions" class="city-suggestions"></div>
-                    </div>
-                    <small style="color: var(--color-text-muted); margin-top: 0.25rem; display: block;">
-                        <span data-i18n="citySearchHint">选择城市后将自动填充坐标</span>
-                    </small>
+                <!-- 模式切换 -->
+                <div class="mode-switcher">
+                    <div class="mode-option active" data-mode="single" data-i18n="modeSingle">单点计算</div>
+                    <div class="mode-option" data-mode="compare-loc" data-i18n="modeCompareLoc">对比地点</div>
+                    <div class="mode-option" data-mode="compare-date" data-i18n="modeCompareDate">对比日期</div>
                 </div>
 
-                <!-- 坐标格式切换和最近城市显示 -->
-                <div class="coordinate-controls">
-                    <div class="nearest-city" id="nearest-city-display">
-                        <span class="nearest-city-icon">📍</span>
-                        <span id="nearest-city-text" data-i18n="nearestCity">输入坐标后显示最近城市</span>
-                    </div>
-                    <button type="button" id="format-toggle" class="format-toggle" title="切换坐标格式">
-                        <span id="format-icon">🔄</span>
-                        <span id="format-text" data-i18n="formatToggleToDMS">切换为度分秒</span>
-                    </button>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="latitude" data-i18n="latitude">纬度 (°)</label>
-                        <input type="number" id="latitude" name="latitude" step="0.0001" min="-90" max="90"
-                            data-i18n="latitudePlaceholder" placeholder="例: 35.0" required>
-                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;" data-i18n="latitudeHint">
-                            范围: -90° (南极) 到 90° (北极)
+                <!-- 位置 1 (主位置) -->
+                <div class="input-section" id="location-section-1">
+                    <h3 class="section-label" data-i18n="location1Label">📍 地点 1</h3>
+                    <!-- 城市搜索 1 -->
+                    <div class="city-search-container">
+                        <label for="city-search" data-i18n="citySearch">🔍 搜索城市</label>
+                        <div class="city-search-wrapper">
+                            <input type="text" id="city-search" data-i18n="citySearchPlaceholder"
+                                placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
+                            <div id="city-suggestions" class="city-suggestions"></div>
+                        </div>
+                        <small style="color: var(--color-text-muted); margin-top: 0.25rem; display: block;">
+                            <span data-i18n="citySearchHint">选择城市后将自动填充坐标</span>
                         </small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="longitude" data-i18n="longitude">经度 (°)</label>
-                        <input type="number" id="longitude" name="longitude" step="0.0001" min="-180" max="180"
-                            placeholder="例: 139.65" data-i18n="longitudePlaceholder" required>
-                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;" data-i18n="longitudeHint">
-                            范围: -180° 到 180°
-                        </small>
+                    <!-- 坐标格式切换和最近城市显示 -->
+                    <div class="coordinate-controls">
+                        <div class="nearest-city" id="nearest-city-display">
+                            <span class="nearest-city-icon">📍</span>
+                            <span id="nearest-city-text" data-i18n="nearestCity">输入坐标后显示最近城市</span>
+                        </div>
+                        <button type="button" id="format-toggle" class="format-toggle" title="切换坐标格式">
+                            <span id="format-icon">🔄</span>
+                            <span id="format-text" data-i18n="formatToggleToDMS">切换为度分秒</span>
+                        </button>
                     </div>
 
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="latitude" data-i18n="latitude">纬度 (°)</label>
+                            <input type="number" id="latitude" name="latitude" step="0.0001" min="-90" max="90"
+                                data-i18n="latitudePlaceholder" placeholder="例: 35.0" required>
+                            <small style="color: var(--color-text-muted); margin-top: 0.25rem;"
+                                data-i18n="latitudeHint">
+                                范围: -90° (南极) 到 90° (北极)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="longitude" data-i18n="longitude">经度 (°)</label>
+                            <input type="number" id="longitude" name="longitude" step="0.0001" min="-180" max="180"
+                                placeholder="例: 139.65" data-i18n="longitudePlaceholder" required>
+                            <small style="color: var(--color-text-muted); margin-top: 0.25rem;"
+                                data-i18n="longitudeHint">
+                                范围: -180° 到 180°
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 位置 2 (对比地点模式显示) -->
+                <div class="input-section hidden" id="location-section-2">
+                    <h3 class="section-label" data-i18n="location2Label">📍 地点 2 (对比)</h3>
+                    <!-- 城市搜索 2 -->
+                    <div class="city-search-container">
+                        <label for="city-search-2" data-i18n="citySearch">🔍 搜索城市</label>
+                        <div class="city-search-wrapper">
+                            <input type="text" id="city-search-2" data-i18n="citySearchPlaceholder"
+                                placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
+                            <div id="city-suggestions-2" class="city-suggestions"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="latitude-2" data-i18n="latitude">纬度 (°)</label>
+                            <input type="number" id="latitude-2" name="latitude-2" step="0.0001" min="-90" max="90"
+                                data-i18n="latitudePlaceholder" placeholder="例: 35.0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="longitude-2" data-i18n="longitude">经度 (°)</label>
+                            <input type="number" id="longitude-2" name="longitude-2" step="0.0001" min="-180" max="180"
+                                placeholder="例: 139.65" data-i18n="longitudePlaceholder">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日期 1 (主日期) -->
+                <div class="form-grid" id="date-section-1">
                     <div class="form-group">
                         <label for="date" data-i18n="date">日期</label>
                         <input type="date" id="date" name="date" required>
+                    </div>
+                </div>
+
+                <!-- 日期 2 (对比日期模式显示) -->
+                <div class="form-grid hidden" id="date-section-2">
+                    <div class="form-group">
+                        <label for="date-2" data-i18n="date2Label">日期 2 (对比)</label>
+                        <input type="date" id="date-2" name="date-2">
                     </div>
                 </div>
 
@@ -124,7 +176,7 @@
         <!-- 结果显示 -->
         <div id="results">
             <div class="card">
-                <h2 class="card-title">📊 计算结果</h2>
+                <h2 class="card-title" data-i18n="resultsTitle">📊 计算结果</h2>
 
                 <div class="result-header">
                     <div class="result-location" id="result-location"></div>
