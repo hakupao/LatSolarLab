@@ -5,6 +5,7 @@
 
 let world;
 let globeContainer;
+let sunLight;
 
 document.addEventListener('DOMContentLoaded', function () {
     initGlobe();
@@ -23,6 +24,18 @@ function initGlobe() {
         .showAtmosphere(true) // 气辉用于轮廓
         .pointOfView({ lat: 35.6762, lng: 139.6503, altitude: 2.5 }, 1000);
 
+    // 基础光照,确保在移动端也有立体感
+    const scene = world.scene ? world.scene() : null;
+    if (scene && window.THREE) {
+        const ambientLight = new THREE.AmbientLight(0x0f172a, 0.85);
+        scene.add(ambientLight);
+
+        sunLight = new THREE.DirectionalLight(0xffd58a, 0.85);
+        sunLight.position.set(1.5, 0.5, 0.8);
+        sunLight.userData.isSunLight = true;
+        scene.add(sunLight);
+    }
+
     // ===== 禁用交互 =====
     const controls = world.controls();
     if (controls) {
@@ -32,17 +45,19 @@ function initGlobe() {
     }
 
     // 设置容器大小随窗口变化
-    window.addEventListener('resize', () => {
+    const resizeGlobe = () => {
+        if (!globeContainer || !world) return;
         world.width(globeContainer.clientWidth);
         world.height(globeContainer.clientHeight);
-    });
+    };
+
+    window.addEventListener('resize', resizeGlobe);
 
     // 初始调整大小
-    setTimeout(() => {
-        world.width(globeContainer.clientWidth);
-        world.height(globeContainer.clientHeight);
+    setTimeout(resizeGlobe, 100);
 
-    }, 100);
+    // 初次设定太阳位置
+    updateSunPosition(new Date());
 }
 
 /**
@@ -77,6 +92,32 @@ function focusOnLocation(lat, lon, label) {
         lng: lon,
         altitude: 1.5
     }, 2000);
+}
+
+function getDayOfYear(date) {
+    const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+    const diff = date.getTime() - start;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * 根据日期模拟太阳方向,用于光照效果
+ * @param {Date} date
+ */
+function updateSunPosition(date = new Date()) {
+    if (!sunLight) return;
+
+    const dayOfYear = getDayOfYear(date);
+    const declination = (23.44 * Math.PI / 180) * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81));
+    const hourFraction = (date.getUTCHours() + date.getUTCMinutes() / 60) / 24;
+    const hourAngle = hourFraction * Math.PI * 2;
+
+    const x = Math.cos(declination) * Math.cos(hourAngle);
+    const y = Math.sin(declination);
+    const z = Math.cos(declination) * Math.sin(hourAngle);
+
+    sunLight.position.set(x * 4, y * 4, z * 4);
+    sunLight.lookAt(0, 0, 0);
 }
 
 // 暴露给其他脚本调用
