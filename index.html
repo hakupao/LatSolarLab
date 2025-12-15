@@ -43,7 +43,8 @@
                 <div class="city-search-container">
                     <label for="city-search" data-i18n="citySearch">🔍 搜索城市</label>
                     <div class="city-search-wrapper">
-                        <input type="text" id="city-search" placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
+                        <input type="text" id="city-search" data-i18n="citySearchPlaceholder"
+                            placeholder="输入城市名称 (中文或英文)..." autocomplete="off">
                         <div id="city-suggestions" class="city-suggestions"></div>
                     </div>
                     <small style="color: var(--color-text-muted); margin-top: 0.25rem; display: block;">
@@ -65,25 +66,25 @@
 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="latitude">纬度 (°)</label>
+                        <label for="latitude" data-i18n="latitude">纬度 (°)</label>
                         <input type="number" id="latitude" name="latitude" step="0.0001" min="-90" max="90"
-                            data-i18n="citySearchPlaceholder" placeholder="输入城市名称 (中文或英文)..." required>
-                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;">
+                            data-i18n="latitudePlaceholder" placeholder="例: 35.0" required>
+                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;" data-i18n="latitudeHint">
                             范围: -90° (南极) 到 90° (北极)
                         </small>
                     </div>
 
                     <div class="form-group">
-                        <label for="longitude">经度 (°)</label>
+                        <label for="longitude" data-i18n="longitude">经度 (°)</label>
                         <input type="number" id="longitude" name="longitude" step="0.0001" min="-180" max="180"
-                            placeholder="例: 139.65" required>
-                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;">
+                            placeholder="例: 139.65" data-i18n="longitudePlaceholder" required>
+                        <small style="color: var(--color-text-muted); margin-top: 0.25rem;" data-i18n="longitudeHint">
                             范围: -180° 到 180°
                         </small>
                     </div>
 
                     <div class="form-group">
-                        <label for="date">日期</label>
+                        <label for="date" data-i18n="date">日期</label>
                         <input type="date" id="date" name="date" required>
                     </div>
                 </div>
@@ -100,16 +101,19 @@
                 <div class="examples">
                     <p class="examples-title" data-i18n="examplesTitle">快速示例:</p>
                     <div class="example-buttons">
-                        <button type="button" class="example-btn" data-lat="35.0" data-lon="139.65">
+                        <button type="button" class="example-btn" data-lat="35.0" data-lon="139.65"
+                            data-i18n="exampleYokohama">
                             🗾 横滨 (35°N)
                         </button>
-                        <button type="button" class="example-btn" data-lat="0" data-lon="0">
+                        <button type="button" class="example-btn" data-lat="0" data-lon="0" data-i18n="exampleEquator">
                             🌍 赤道
                         </button>
-                        <button type="button" class="example-btn" data-lat="66.5" data-lon="25.7">
+                        <button type="button" class="example-btn" data-lat="66.5" data-lon="25.7"
+                            data-i18n="exampleArctic">
                             🌌 北极圈
                         </button>
-                        <button type="button" class="example-btn" data-lat="-66.5" data-lon="0">
+                        <button type="button" class="example-btn" data-lat="-66.5" data-lon="0"
+                            data-i18n="exampleAntarctic">
                             🐧 南极圈
                         </button>
                     </div>
@@ -191,10 +195,10 @@
                 style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 0.875rem;">
                 <p><strong data-i18n="formulaNote">说明:</strong></p>
                 <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                    <li>S₀ = 1367 W/m² (太阳常数)</li>
-                    <li>φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数</li>
-                    <li>TOA = Top of Atmosphere (大气顶层)</li>
-                    <li>k = 有效吸收因子,考虑大气散射、云反射、地表反照率等综合效应</li>
+                    <li data-i18n="formulaNoteItem1">S₀ = 1367 W/m² (太阳常数)</li>
+                    <li data-i18n="formulaNoteItem2">φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数</li>
+                    <li data-i18n="formulaNoteItem3">TOA = Top of Atmosphere (大气顶层)</li>
+                    <li data-i18n="formulaNoteItem4">k = 有效吸收因子,考虑大气散射、云反射、地表反照率等综合效应</li>
                 </ul>
             </div>
         </div>

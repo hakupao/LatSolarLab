@@ -77,12 +77,10 @@ const translations = {
         formulaTOA: "日总辐射 (TOA):",
         formulaNetAbsorption: "净吸收辐射:",
         formulaNote: "说明:",
-        formulaNoteItems: [
-            "S₀ = 1367 W/m² (太阳常数)",
-            "φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数",
-            "TOA = Top of Atmosphere (大气顶层)",
-            "k = 有效吸收因子,考虑大气散射、云反射、地表反照率等综合效应"
-        ],
+        formulaNoteItem1: "S₀ = 1367 W/m² (太阳常数)",
+        formulaNoteItem2: "φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数",
+        formulaNoteItem3: "TOA = Top of Atmosphere (大气顶层)",
+        formulaNoteItem4: "k = 有效吸收因子,考虑大气散射、云反射、地表反照率等综合效应",
 
         // 页脚
         footerText: "基于简化的能量收支模型 | 数据仅供参考",
@@ -181,12 +179,10 @@ const translations = {
         formulaTOA: "Daily Radiation (TOA):",
         formulaNetAbsorption: "Net Absorption:",
         formulaNote: "Notes:",
-        formulaNoteItems: [
-            "S₀ = 1367 W/m² (Solar constant)",
-            "φ = Latitude, δ = Declination, ω = Hour angle, n = Day of year",
-            "TOA = Top of Atmosphere",
-            "k = Effective absorption factor, considering atmospheric scattering, cloud reflection, surface albedo, etc."
-        ],
+        formulaNoteItem1: "S₀ = 1367 W/m² (Solar constant)",
+        formulaNoteItem2: "φ = Latitude, δ = Declination, ω = Hour angle, n = Day of year",
+        formulaNoteItem3: "TOA = Top of Atmosphere",
+        formulaNoteItem4: "k = Effective absorption factor, considering atmospheric scattering, cloud reflection, surface albedo, etc.",
 
         // Footer
         footerText: "Based on simplified energy balance model | Data for reference only",
