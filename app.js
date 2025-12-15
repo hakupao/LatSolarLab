@@ -84,10 +84,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // 输入验证
     function validateInputs(lat, lon) {
         if (isNaN(lat) || lat < -90 || lat > 90) {
-            return '纬度必须在 -90° 到 90° 之间';
+            return t('errorLatitude');
         }
         if (isNaN(lon) || lon < -180 || lon > 180) {
-            return '经度必须在 -180° 到 180° 之间';
+            return t('errorLongitude');
         }
         return null;
     }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // 添加加载动画
-        calculateBtn.textContent = '计算中...';
+        calculateBtn.textContent = t('calculating');
         calculateBtn.disabled = true;
 
         // 延迟一点以显示加载效果
@@ -137,9 +137,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 resultsSection.style.display = 'block';
                 resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } catch (err) {
-                showError('计算出错: ' + err.message);
+                showError(t('errorCalculation') + ' ' + err.message);
             } finally {
-                calculateBtn.textContent = '计算';
+                calculateBtn.textContent = t('calculate');
                 calculateBtn.disabled = false;
             }
         }, 300);
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (results.isPolarNight) {
             document.getElementById('result-declination').textContent =
                 `${results.declination.toFixed(2)}°`;
-            document.getElementById('result-daylight').textContent = '0 小时 (极夜)';
+            document.getElementById('result-daylight').textContent = `0 ${t('hours')} (${t('polarNight')})`;
             document.getElementById('result-toa').textContent = '0 W/m²';
             document.getElementById('result-net').textContent = '0 W/m²';
             return;
@@ -180,12 +180,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (results.isPolarDay) {
             document.getElementById('result-declination').textContent =
                 `${results.declination.toFixed(2)}°`;
-            document.getElementById('result-daylight').textContent = '24 小时 (极昼)';
+            document.getElementById('result-daylight').textContent = `24 ${t('hours')} (${t('polarDay')})`;
         } else {
             document.getElementById('result-declination').textContent =
                 `${results.declination.toFixed(2)}°`;
             document.getElementById('result-daylight').textContent =
-                `${results.daylight.toFixed(2)} 小时`;
+                `${results.daylight.toFixed(2)} ${t('hours')}`;
         }
 
         document.getElementById('result-toa').textContent =
@@ -209,24 +209,24 @@ document.addEventListener('DOMContentLoaded', function () {
         // 判断季节
         if (Math.abs(lat) < 23.45) {
             // 热带地区
-            hint = '🌴 热带地区,全年接收较高的太阳辐射';
+            hint = t('seasonTropical');
         } else if (lat > 0) {
             // 北半球
             if (dec > 15) {
-                hint = '☀️ 北半球夏季,日照时间长,辐射强';
+                hint = t('seasonNorthSummer');
             } else if (dec < -15) {
-                hint = '❄️ 北半球冬季,日照时间短,辐射弱';
+                hint = t('seasonNorthWinter');
             } else {
-                hint = '🍂 北半球春秋季,辐射适中';
+                hint = t('seasonNorthTransition');
             }
         } else {
             // 南半球
             if (dec > 15) {
-                hint = '❄️ 南半球冬季,日照时间短,辐射弱';
+                hint = t('seasonSouthWinter');
             } else if (dec < -15) {
-                hint = '☀️ 南半球夏季,日照时间长,辐射强';
+                hint = t('seasonSouthSummer');
             } else {
-                hint = '🍂 南半球春秋季,辐射适中';
+                hint = t('seasonSouthTransition');
             }
         }
 
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 设置防抖,延迟 500ms 执行搜索
         searchTimeout = setTimeout(async function () {
             // 显示加载状态
-            citySuggestions.innerHTML = '<div class="suggestion-loading">Searching...</div>';
+            citySuggestions.innerHTML = `<div class="suggestion-loading">${t('searching')}</div>`;
             citySuggestions.classList.add('active');
 
             try {
@@ -287,10 +287,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const results = await searchCitiesHybrid(query);
 
                 if (results.length === 0) {
-                    citySuggestions.innerHTML = '<div class="suggestion-loading">No results found</div>';
+                    citySuggestions.innerHTML = `<div class="suggestion-loading">${t('noResults')}</div>`;
                     // 3秒后隐藏
                     setTimeout(() => {
-                        if (citySuggestions.innerHTML.includes('No results')) {
+                        if (citySuggestions.innerHTML.includes(t('noResults'))) {
                             citySuggestions.classList.remove('active');
                         }
                     }, 3000);
@@ -304,8 +304,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     item.className = 'suggestion-item';
 
                     // 标记来源
-                    const sourceTag = city.source === 'google' ? ' <span class="badge-source">Google</span>' :
-                        (city.source === 'nominatim' ? ' <span class="badge-source">OSM</span>' : '');
+                    const sourceTag = city.source === 'google' ? ` <span class="badge-source">${t('sourceGoogle')}</span>` :
+                        (city.source === 'nominatim' ? ` <span class="badge-source">${t('sourceOSM')}</span>` : '');
 
                     item.innerHTML = `
                         <div class="suggestion-city-name">${city.name} / ${city.nameEn}${sourceTag}</div>
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             } catch (error) {
                 console.error('Search error:', error);
-                citySuggestions.innerHTML = `<div class="suggestion-loading error">Error: ${error.message}</div>`;
+                citySuggestions.innerHTML = `<div class="suggestion-loading error">${t('errorPrefix')}${error.message}</div>`;
             }
         }, 500); // 500ms 延迟
     });
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const lon = parseFloat(longitudeInput.value);
 
         if (isNaN(lat) || isNaN(lon)) {
-            nearestCityText.textContent = '输入坐标后显示最近城市';
+            nearestCityText.textContent = t('nearestCity');
             return;
         }
 

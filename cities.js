@@ -268,11 +268,11 @@ function parseDMS(dmsString) {
  */
 function formatDistance(distance) {
     if (distance < 1) {
-        return `${Math.round(distance * 1000)} 米`;
+        return `${Math.round(distance * 1000)} ${t('meter')}`;
     } else if (distance < 10) {
-        return `${distance.toFixed(1)} 公里`;
+        return `${distance.toFixed(1)} ${t('kilometer')}`;
     } else {
-        return `${Math.round(distance)} 公里`;
+        return `${Math.round(distance)} ${t('kilometer')}`;
     }
 }
 

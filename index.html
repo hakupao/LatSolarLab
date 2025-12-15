@@ -129,27 +129,27 @@
 
                 <div class="results-grid">
                     <div class="result-item">
-                        <div class="result-label">日序数</div>
+                        <div class="result-label" data-i18n="dayOfYear">日序数</div>
                         <div class="result-value" id="result-day">-</div>
                     </div>
 
                     <div class="result-item">
-                        <div class="result-label">太阳赤纬角 (δ)</div>
+                        <div class="result-label" data-i18n="solarDeclination">太阳赤纬角 (δ)</div>
                         <div class="result-value" id="result-declination">-</div>
                     </div>
 
                     <div class="result-item">
-                        <div class="result-label">日照时长</div>
+                        <div class="result-label" data-i18n="daylightHours">日照时长</div>
                         <div class="result-value" id="result-daylight">-</div>
                     </div>
 
                     <div class="result-item">
-                        <div class="result-label">TOA 日总辐射 (H)</div>
+                        <div class="result-label" data-i18n="toaRadiation">TOA 日总辐射 (H)</div>
                         <div class="result-value highlight" id="result-toa">-</div>
                     </div>
 
                     <div class="result-item">
-                        <div class="result-label">净吸收辐射 (F<sub>in</sub>)</div>
+                        <div class="result-label" data-i18n="netAbsorption">净吸收辐射 (F<sub>in</sub>)</div>
                         <div class="result-value highlight" id="result-net">-</div>
                     </div>
                 </div>
@@ -160,36 +160,36 @@
 
         <!-- 公式参考 -->
         <div class="card formula-reference">
-            <h3>📐 计算公式参考</h3>
+            <h3 data-i18n="formulaTitle">📐 计算公式参考</h3>
 
             <div class="formula-item">
-                <strong>太阳赤纬角:</strong><br>
+                <strong data-i18n="formulaSolarDeclination">太阳赤纬角:</strong><br>
                 <code>δ = 23.45° × sin(360° × (284 + n) / 365)</code>
             </div>
 
             <div class="formula-item">
-                <strong>日出/日落时角:</strong><br>
+                <strong data-i18n="formulaHourAngle">日出/日落时角:</strong><br>
                 <code>cos(ω) = -tan(φ) × tan(δ)</code>
             </div>
 
             <div class="formula-item">
-                <strong>日照时长:</strong><br>
+                <strong data-i18n="formulaDaylight">日照时长:</strong><br>
                 <code>T = 2ω × 24 / (2π) 小时</code>
             </div>
 
             <div class="formula-item">
-                <strong>日总辐射 (TOA):</strong><br>
+                <strong data-i18n="formulaTOA">日总辐射 (TOA):</strong><br>
                 <code>H = (S₀/π) × (1 + 0.033cos(360n/365)) × [ω×sin(φ)sin(δ) + cos(φ)cos(δ)sin(ω)]</code>
             </div>
 
             <div class="formula-item">
-                <strong>净吸收辐射:</strong><br>
+                <strong data-i18n="formulaNetAbsorption">净吸收辐射:</strong><br>
                 <code>F<sub>in</sub> = k × H</code> (k ≈ 0.55)
             </div>
 
             <div
                 style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 0.875rem;">
-                <p><strong>说明:</strong></p>
+                <p><strong data-i18n="formulaNote">说明:</strong></p>
                 <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
                     <li>S₀ = 1367 W/m² (太阳常数)</li>
                     <li>φ = 纬度, δ = 赤纬角, ω = 时角, n = 日序数</li>
@@ -201,8 +201,8 @@
 
         <!-- 页脚 -->
         <footer>
-            <p>基于简化的能量收支模型 | 数据仅供参考</p>
-            <p style="margin-top: 0.5rem; opacity: 0.7;">
+            <p data-i18n="footerText">基于简化的能量收支模型 | 数据仅供参考</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;" data-i18n="footerCopyright">
                 © 2025 LatSolarLab
             </p>
         </footer>

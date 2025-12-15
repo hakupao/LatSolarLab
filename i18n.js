@@ -96,7 +96,16 @@ const translations = {
 
         // 语言切换
         languageName: "中文",
-        switchLanguage: "English"
+        switchLanguage: "English",
+
+        // 动态状态
+        searching: "搜索中...",
+        noResults: "未找到结果",
+        meter: "米",
+        kilometer: "公里",
+        sourceGoogle: "Google",
+        sourceOSM: "OSM",
+        errorPrefix: "错误: "
     },
 
     en: {
@@ -191,7 +200,16 @@ const translations = {
 
         // Language toggle
         languageName: "English",
-        switchLanguage: "中文"
+        switchLanguage: "中文",
+
+        // Dynamic status
+        searching: "Searching...",
+        noResults: "No results found",
+        meter: "m",
+        kilometer: "km",
+        sourceGoogle: "Google",
+        sourceOSM: "OSM",
+        errorPrefix: "Error: "
     }
 };
 
