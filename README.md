@@ -1,61 +1,51 @@
-# LatSolarLab 
+# LatSolarLab
 
-**Latitude Solar Radiation Calculator / 纬度太阳辐射计算器**
+Latitude Solar Radiation Calculator / 纬度太阳辐射计算器
 
-LatSolarLab is a web application that calculates solar radiation received at any location on Earth for any given date. It combines a simplified energy balance model with an interactive 3D globe visualization.
-
-LatSolarLab 是一个基于 Web 的应用程序，用于计算地球上任意位置在任意日期的太阳辐射量。它结合了简化的能量平衡模型和交互式 3D 地球可视化。
+计算地球上任意位置在任意日期的太阳辐射量, 并在 3D 地球上联动展示。DMS/十进制坐标切换、双语界面、最近城市提示和地点/日期对比模式均已开箱可用。
 
 ---
 
-## Features (功能)
+## Features / 功能
+- Solar radiation: TOA 日总辐射与净吸收计算, 支持极昼/极夜提示。
+- Dual coordinate formats: 十进制与度分秒互转, 示例按钮与最近城市均支持 DMS。
+- Geocoding: 本地城市库 + Nominatim 免费 API, 配置密钥后可切换 Google。
+- I18n: 中英文双语, 动态文本与格式切换同步更新。
+- Visualization: Three.js + Globe.gl 背景地球, 聚焦选定地点并模拟太阳方向。
+- Responsive: 适配桌面与移动端。
 
-*   **Solar Radiation Calculation (太阳辐射计算)**: Calculate TOA (Top of Atmosphere) daily radiation and net absorption. (计算大气顶层日总辐射和净吸收辐射)
-*   **Interactive 3D Globe (交互式 3D 地球)**: Visualize the location and sunlight on a 3D globe. (在 3D 地球上可视化位置和光照)
-*   **Geocoding (地理编码)**: Search for cities worldwide using Google Maps API or OpenStreetMap (Nominatim). (使用 Google Maps API 或 OSM 搜索全球城市)
-*   **Bilingual Support (双语支持)**: Fully localized in English and Chinese. (完全支持中英文双语)
-*   **Responsive Design (响应式设计)**: Works seamlessly on desktop and mobile devices. (完美适配桌面和移动设备)
+## Setup / 安装
+1) 克隆仓库 / Clone  
+```bash
+git clone https://github.com/yourusername/LatSolarLab.git
+cd LatSolarLab
+```
 
-## Technology Stack (技术栈)
+2) 配置 API 密钥 (可选)  
+- 默认使用免费 OSM Nominatim, 无需密钥。  
+- 若需 Google Geocoding, 复制 `config.example.js` 为 `config.js` 并填写 `GOOGLE_API_KEY`，或在构建时注入环境变量：  
+```bash
+GOOGLE_API_KEY=your_key node generate-config.js
+```
+> 生产环境不要提交真实密钥；`config.js` 已列入 `.gitignore`。
 
-*   **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-*   **3D Visualization**: Three.js, Globe.gl
-*   **Geocoding**: Google Maps API / Nominatim API
-*   **Formulas**: Simplified solar energy balance equations
+3) 本地运行  
+- 直接双击 `index.html`，或使用本地服务器（贴图加载更稳定）：  
+```bash
+npx http-server .
+```
 
-## Installation & Setup (安装与设置)
+## Deployment / 部署
+- 适用于静态托管 (Cloudflare Pages / Vercel / GitHub Pages)。  
+- Cloudflare Pages 示例:  
+  - Build Command: `node generate-config.js`  
+  - Build Output: `.`  
+  - Env: `GOOGLE_API_KEY` (可选, 留空则自动回退 OSM)
 
-1.  **Clone the repository (克隆仓库)**:
-    ```bash
-    git clone https://github.com/yourusername/LatSolarLab.git
-    cd LatSolarLab
-    ```
+## Notes / 说明
+- DMS 输入错误会提示并阻止计算，避免错误数据进入模型。  
+- 最近城市、示例按钮与 3D 聚焦均使用解析后的经纬度，保持一致性。  
+- 如果缺失外部依赖 (Globe.gl/Three), 相关功能会优雅降级而不阻塞页面。
 
-2.  **Configuration (配置)**:
-    *   Duplicate `config.example.js` and rename it to `config.js`. (复制 `config.example.js` 并重命名为 `config.js`)
-    *   Add your Google Geocoding API Key to `config.js`. (在 `config.js` 中添加您的 Google API 密钥)
-    ```javascript
-    const CONFIG = {
-        GOOGLE_API_KEY: 'YOUR_API_KEY_HERE'
-    };
-    ```
-
-3.  **Run Locally (本地运行)**:
-    *   Simply open `index.html` in your browser. (直接在浏览器中打开 `index.html`)
-    *   Or use a local server (recommended for 3D textures loading): (或使用本地服务器 - 推荐)
-    ```bash
-    npx http-server .
-    ```
-
-## Deployment (部署)
-
-This project is ready for deployment on static hosting services like **Cloudflare Pages**, **Vercel**, or **GitHub Pages**.
-
-### Cloudflare Pages
-*   **Build Command**: `node generate-config.js`
-*   **Build Output Directory**: `.` (Root directory / 根目录)
-*   **Environment Variables**: Add `GOOGLE_API_KEY` with your API key. (添加环境变量 `GOOGLE_API_KEY`)
-
-## License (许可证)
-
+## License
 MIT License. See [LICENSE](LICENSE) file for details.

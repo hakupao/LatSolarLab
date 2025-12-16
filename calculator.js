@@ -181,25 +181,12 @@ function calculateSolarRadiation(latitude, longitude, date) {
  * @returns {Object} { lat, lon } 太阳直射点的经纬度
  */
 function calculateSunPosition(date) {
-    // 1. 计算赤纬 (直射纬度)
-    // 简复用 calculateDayOfYear 逻辑
-    const start = new Date(date.getFullYear(), 0, 0);
-    const diff = date - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
+    const dayOfYear = calculateDayOfYear(date);
+    const declination = calculateSolarDeclination(dayOfYear);
 
-    // 简化的赤纬公式
-    const declination = 23.45 * Math.sin(toRadians(360 / 365 * (284 + dayOfYear)));
-
-    // 2. 计算直射经度
-    // 太阳在中午12:00 (UTC) 直射本初子午线
-    // 经度 = (12 - UTC时间) * 15
+    // 太阳在中午12:00 (UTC) 直射本初子午线, 经度 = (12 - UTC时间) * 15
     const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60;
-    let sunLon = (12 - utcHours) * 15;
-
-    // 规范化到 -180 到 180
-    if (sunLon > 180) sunLon -= 360;
-    if (sunLon < -180) sunLon += 360;
+    const sunLon = (((12 - utcHours) * 15) + 180) % 360 - 180; // 规范化到 -180~180
 
     return {
         lat: declination,

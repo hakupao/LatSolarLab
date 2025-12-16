@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function initGlobe() {
     globeContainer = document.getElementById('globe-container');
+    if (!globeContainer || typeof Globe !== 'function') {
+        return;
+    }
     // 使用半透明贴图：轻度纹理辅助定位，但整体以线框为主
     const translucentEarth = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 
@@ -94,12 +97,6 @@ function focusOnLocation(lat, lon, label) {
     }, 2000);
 }
 
-function getDayOfYear(date) {
-    const start = Date.UTC(date.getUTCFullYear(), 0, 0);
-    const diff = date.getTime() - start;
-    return Math.floor(diff / (1000 * 60 * 60 * 24));
-}
-
 /**
  * 根据日期模拟太阳方向,用于光照效果
  * @param {Date} date
@@ -107,14 +104,28 @@ function getDayOfYear(date) {
 function updateSunPosition(date = new Date()) {
     if (!sunLight) return;
 
-    const dayOfYear = getDayOfYear(date);
-    const declination = (23.44 * Math.PI / 180) * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81));
-    const hourFraction = (date.getUTCHours() + date.getUTCMinutes() / 60) / 24;
-    const hourAngle = hourFraction * Math.PI * 2;
+    const toRadiansLocal = (degrees) => degrees * Math.PI / 180;
+    let sunPosition;
 
-    const x = Math.cos(declination) * Math.cos(hourAngle);
-    const y = Math.sin(declination);
-    const z = Math.cos(declination) * Math.sin(hourAngle);
+    if (typeof calculateSunPosition === 'function') {
+        sunPosition = calculateSunPosition(date);
+    } else {
+        // 退化到简单近似,避免依赖缺失导致崩溃
+        const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+        const diff = date.getTime() - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const declination = 23.44 * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81));
+        const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60;
+        const lon = ((12 - utcHours) * 15 + 180) % 360 - 180;
+        sunPosition = { lat: declination, lon: lon };
+    }
+
+    const declinationRad = toRadiansLocal(sunPosition.lat);
+    const lonRad = toRadiansLocal(sunPosition.lon);
+
+    const x = Math.cos(declinationRad) * Math.cos(lonRad);
+    const y = Math.sin(declinationRad);
+    const z = Math.cos(declinationRad) * Math.sin(lonRad);
 
     sunLight.position.set(x * 4, y * 4, z * 4);
     sunLight.lookAt(0, 0, 0);

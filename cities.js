@@ -122,6 +122,8 @@ const CITIES_DATABASE = [
     { name: "基多", nameEn: "Quito", country: "厄瓜多尔", countryEn: "Ecuador", lat: -0.1807, lon: -78.4678 },
 ];
 
+const toRadiansLocal = (degrees) => degrees * Math.PI / 180;
+
 /**
  * 使用 Haversine 公式计算两点间的距离
  * @param {number} lat1 - 第一个点的纬度
@@ -132,11 +134,11 @@ const CITIES_DATABASE = [
  */
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // 地球半径 (公里)
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
+    const dLat = toRadiansLocal(lat2 - lat1);
+    const dLon = toRadiansLocal(lon2 - lon1);
 
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.cos(toRadiansLocal(lat1)) * Math.cos(toRadiansLocal(lat2)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -282,14 +284,15 @@ function formatDistance(distance) {
  * API 配置
  * 支持两种API: Nominatim (免费) 和 Google Geocoding (需要密钥)
  */
+const hasGoogleKey = (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_API_KEY);
 const API_CONFIG = {
     // 当前使用的API提供商: 'nominatim' 或 'google'
-    provider: 'google',
+    provider: hasGoogleKey ? 'google' : 'nominatim',
 
     // Google Geocoding API 密钥 (如果使用Google)
     // 获取方式: https://console.cloud.google.com/
 
-    googleApiKey: (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_API_KEY) ? CONFIG.GOOGLE_API_KEY : '', // 从 config.js 读取密钥
+    googleApiKey: hasGoogleKey ? CONFIG.GOOGLE_API_KEY : '', // 从 config.js 读取密钥
 
     // Nominatim API配置 (免费,无需密钥)
     nominatim: {
@@ -478,11 +481,14 @@ async function searchWithGoogle(query) {
  * @returns {Promise<Array>} 搜索结果
  */
 async function searchWithAPI(query) {
-    if (API_CONFIG.provider === 'google') {
-        return await searchWithGoogle(query);
-    } else {
+    if (API_CONFIG.provider === 'google' && !API_CONFIG.googleApiKey) {
+        console.warn('Google API key missing, falling back to Nominatim');
         return await searchWithNominatim(query);
     }
+
+    return API_CONFIG.provider === 'google'
+        ? await searchWithGoogle(query)
+        : await searchWithNominatim(query);
 }
 
 /**
@@ -549,17 +555,19 @@ async function searchCitiesHybrid(query) {
  * @param {string} apiKey - Google API密钥 (如果使用Google)
  */
 function setAPIProvider(provider, apiKey = '') {
-    if (provider === 'google' && !apiKey) {
-        console.warn('Google API key is required');
-        return false;
-    }
-
-    API_CONFIG.provider = provider;
     if (provider === 'google') {
-        API_CONFIG.googleApiKey = apiKey;
+        const key = apiKey || API_CONFIG.googleApiKey;
+        if (!key) {
+            console.warn('Google API key is required; falling back to Nominatim.');
+            API_CONFIG.provider = 'nominatim';
+            return false;
+        }
+        API_CONFIG.googleApiKey = key;
+        API_CONFIG.provider = 'google';
+    } else {
+        API_CONFIG.provider = 'nominatim';
     }
 
-    console.log(`API provider set to: ${provider}`);
-    return true;
+    console.log(`API provider set to: ${API_CONFIG.provider}`);
+    return API_CONFIG.provider === provider;
 }
-

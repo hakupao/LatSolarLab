@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const dateInput2 = document.getElementById('date-2');
 
     // ===== 语言初始化 =====
-    // 初始化语言设置
-    const initialLang = initLanguage();
+    initLanguage();
     updatePageLanguage();
+    refreshCoordinateUI();
 
     // 语言切换按钮
     const langToggle = document.getElementById('lang-toggle');
@@ -55,28 +55,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 监听语言变化事件,更新动态内容
     document.addEventListener('languageChanged', function (e) {
-        // 更新格式切换按钮文本
-        if (isDMSFormat) {
-            formatText.textContent = t('formatToggleToDecimal');
-        } else {
-            formatText.textContent = t('formatToggleToDMS');
-        }
-
-        // 更新最近城市显示
+        refreshCoordinateUI();
         updateNearestCity();
-
-        // 更新标签
-        const latLabel = document.querySelector('label[for="latitude"]');
-        const lonLabel = document.querySelector('label[for="longitude"]');
-        if (latLabel && lonLabel) {
-            if (isDMSFormat) {
-                latLabel.textContent = t('latitudeDMS');
-                lonLabel.textContent = t('longitudeDMS');
-            } else {
-                latLabel.textContent = t('latitude') + ' ' + t('latitudeUnit');
-                lonLabel.textContent = t('longitude') + ' ' + t('longitudeUnit');
-            }
-        }
     });
 
     // 设置默认日期为今天
@@ -100,6 +80,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // 更新当前模式
             currentMode = option.dataset.mode;
             updateFormVisibility();
+
+            // 切换模式时隐藏结果和错误，避免混淆
+            if (resultsSection) resultsSection.style.display = 'none';
+            if (errorMessage) errorMessage.style.display = 'none';
         });
     });
 
@@ -135,6 +119,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function updateFormatToggleText() {
+        if (!formatText) return;
+        formatText.textContent = isDMSFormat ? t('formatToggleToDecimal') : t('formatToggleToDMS');
+    }
+
+    function updateCoordinateLabels() {
+        const latLabel = document.querySelector('label[for="latitude"]');
+        const lonLabel = document.querySelector('label[for="longitude"]');
+        if (!latLabel || !lonLabel) return;
+
+        if (isDMSFormat) {
+            latLabel.textContent = t('latitudeDMS');
+            lonLabel.textContent = t('longitudeDMS');
+        } else {
+            latLabel.textContent = `${t('latitude')} ${t('latitudeUnit')}`;
+            lonLabel.textContent = `${t('longitude')} ${t('longitudeUnit')}`;
+        }
+    }
+
+    function refreshCoordinateUI() {
+        updateFormatToggleText();
+        updateCoordinateLabels();
+    }
+
     // 初始化第二个城市搜索逻辑 (复用现有逻辑的简化版)
     setupCitySearch(citySearchInput2, citySuggestions2, (city) => {
         latitudeInput2.value = city.lat.toFixed(4);
@@ -160,23 +168,39 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-    // 计算并显示结果
-    function calculateAndDisplay() {
-        // 清除之前的错误信息
+    function parsePrimaryCoordinates() {
+        if (isDMSFormat) {
+            const lat = parseDMS(latitudeInput.value);
+            const lon = parseDMS(longitudeInput.value);
+            if (lat === null || lon === null) {
+                return { error: t('errorDMSFormat') };
+            }
+            return { latitude: lat, longitude: lon };
+        }
+
+        return {
+            latitude: parseFloat(latitudeInput.value),
+            longitude: parseFloat(longitudeInput.value)
+        };
+    }
+
+    function clearError() {
         errorMessage.textContent = '';
         errorMessage.style.display = 'none';
+    }
 
-        // 获取输入值 (主组)
-        const latitude = parseFloat(latitudeInput.value);
-        const longitude = parseFloat(longitudeInput.value);
+    // 计算并显示结果
+    function calculateAndDisplay() {
+        clearError();
+
+        const { latitude, longitude, error: coordError } = parsePrimaryCoordinates();
         const dateValue = new Date(dateInput.value);
 
-        // 验证主输入
-        let error = validateInputs(latitude, longitude);
-        if (error) {
-            showError(error);
-            return;
-        }
+        if (coordError) return showError(coordError);
+
+        const validationError = validateInputs(latitude, longitude);
+        if (validationError) return showError(validationError);
+        if (Number.isNaN(dateValue.getTime())) return showError(t('errorCalculation'));
 
         // 添加加载动画
         calculateBtn.textContent = t('calculating');
@@ -215,6 +239,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (currentMode === 'compare-date') {
                     // 对比日期: 计算两组
                     const dateValue2 = new Date(dateInput2.value);
+                    if (Number.isNaN(dateValue2.getTime())) {
+                        throw new Error(t('date2Label'));
+                    }
 
                     const result1 = calculateSolarRadiation(latitude, longitude, dateValue);
                     const result2 = calculateSolarRadiation(latitude, longitude, dateValue2);
@@ -244,8 +271,11 @@ document.addEventListener('DOMContentLoaded', function () {
         resultsSection.style.display = 'none';
     }
 
-    // 显示计算结果
+    // 显示计算结果 (单点模式)
     function displayResults(results) {
+        const resultsCard = document.querySelector('#results .card');
+        if (!resultsCard) return;
+
         // 格式化日期
         const locale = currentLanguage === 'zh' ? 'zh-CN' : 'en-US';
         const dateStr = results.date.toLocaleDateString(locale, {
@@ -254,37 +284,54 @@ document.addEventListener('DOMContentLoaded', function () {
             day: 'numeric'
         });
 
-        // 更新结果显示
-        document.getElementById('result-location').textContent =
-            `${t('latitude')} ${results.latitude.toFixed(2)}°, ${t('longitude')} ${results.longitude.toFixed(2)}°`;
-        document.getElementById('result-date').textContent = dateStr;
-        document.getElementById('result-day').textContent = results.dayOfYear;
+        // 预处理数据
+        const declinationText = `${results.declination.toFixed(2)}°`;
 
-        // 检查特殊情况
-        if (results.isPolarNight) {
-            document.getElementById('result-declination').textContent =
-                `${results.declination.toFixed(2)}°`;
-            document.getElementById('result-daylight').textContent = `0 ${t('hours')} (${t('polarNight')})`;
-            document.getElementById('result-toa').textContent = '0 W/m²';
-            document.getElementById('result-net').textContent = '0 W/m²';
-            return;
-        }
+        let daylightText = `${results.daylight.toFixed(2)} ${t('hours')}`;
+        if (results.isPolarNight) daylightText = `0 ${t('hours')} (${t('polarNight')})`;
+        if (results.isPolarDay) daylightText = `24 ${t('hours')} (${t('polarDay')})`;
 
-        if (results.isPolarDay) {
-            document.getElementById('result-declination').textContent =
-                `${results.declination.toFixed(2)}°`;
-            document.getElementById('result-daylight').textContent = `24 ${t('hours')} (${t('polarDay')})`;
-        } else {
-            document.getElementById('result-declination').textContent =
-                `${results.declination.toFixed(2)}°`;
-            document.getElementById('result-daylight').textContent =
-                `${results.daylight.toFixed(2)} ${t('hours')}`;
-        }
+        const toaText = results.isPolarNight ? '0 W/m²' : `${results.toaRadiation.toFixed(2)} W/m²`;
+        const netText = results.isPolarNight ? '0 W/m²' : `${results.netAbsorption.toFixed(2)} W/m²`;
 
-        document.getElementById('result-toa').textContent =
-            `${results.toaRadiation.toFixed(2)} W/m²`;
-        document.getElementById('result-net').textContent =
-            `${results.netAbsorption.toFixed(2)} W/m²`;
+        // 重建 HTML 结构
+        resultsCard.innerHTML = `
+            <h2 class="card-title" data-i18n="resultsTitle">${t('resultsTitle')}</h2>
+
+            <div class="result-header">
+                <div class="result-location">${t('latitude')} ${results.latitude.toFixed(2)}°, ${t('longitude')} ${results.longitude.toFixed(2)}°</div>
+                <div class="result-date">${dateStr}</div>
+            </div>
+
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-label" data-i18n="dayOfYear">${t('dayOfYear')}</div>
+                    <div class="result-value">${results.dayOfYear}</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label" data-i18n="solarDeclination">${t('solarDeclination')}</div>
+                    <div class="result-value">${declinationText}</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label" data-i18n="daylightHours">${t('daylightHours')}</div>
+                    <div class="result-value">${daylightText}</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label" data-i18n="toaRadiation">${t('toaRadiation')}</div>
+                    <div class="result-value highlight">${toaText}</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label" data-i18n="netAbsorption">${t('netAbsorption')}</div>
+                    <div class="result-value highlight">${netText}</div>
+                </div>
+            </div>
+
+            <div class="seasonal-hint" id="seasonal-hint"></div>
+        `;
 
         // 添加季节提示
         addSeasonalHint(results);
@@ -292,8 +339,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 显示对比结果
     function displayComparisonResults(res1, res2, label1, label2) {
-        // 清空结果区域
-        const resultsContainer = document.querySelector('.card .result-header')?.parentNode;
+        // 直接获取卡片容器 (修复: 不要依赖子元素 .result-header)
+        const resultsContainer = document.querySelector('#results .card');
         if (!resultsContainer) return;
 
         // 渲染对比 HTML
@@ -327,11 +374,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 1.5rem;">
-                 <button onclick="window.location.reload()" class="btn" style="width: auto; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.1); font-size: 0.9rem;">
-                    Back to Single View
-                 </button>
-            </div>
         `;
     }
 
@@ -350,15 +392,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const diff = val1 - val2;
+        const percent = val2 !== 0 ? (diff / val2) * 100 : null;
         let diffColor = diff > 0 ? '#30d158' : (diff < 0 ? '#ff453a' : '#888');
         let diffIcon = diff > 0 ? '▲' : (diff < 0 ? '▼' : '-');
+        const percentText = percent === null ? '' : ` (${diff >= 0 ? '+' : '-'}${Math.abs(percent).toFixed(1)}%)`;
 
         return `
             <div class="comparison-item">
                 <div class="comparison-label">${label}</div>
                 <div class="comparison-value highlight">${val1.toFixed(2)} ${unit}</div>
                 <div style="color: ${diffColor}; font-size: 0.8rem; margin-top: 0.2rem;">
-                    ${diffIcon} ${Math.abs(diff).toFixed(2)}
+                    ${diffIcon} ${Math.abs(diff).toFixed(2)}${percentText}
                 </div>
             </div>
         `;
@@ -404,12 +448,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const exampleButtons = document.querySelectorAll('.example-btn');
     exampleButtons.forEach(btn => {
         btn.addEventListener('click', function () {
-            const lat = this.dataset.lat;
-            const lon = this.dataset.lon;
+            const lat = parseFloat(this.dataset.lat);
+            const lon = parseFloat(this.dataset.lon);
             const date = this.dataset.date;
 
-            latitudeInput.value = lat;
-            longitudeInput.value = lon;
+            if (isDMSFormat) {
+                latitudeInput.value = convertToDMS(lat, true);
+                longitudeInput.value = convertToDMS(lon, false);
+            } else {
+                latitudeInput.value = lat;
+                longitudeInput.value = lon;
+            }
             if (date) {
                 dateInput.value = date;
             }
@@ -499,13 +548,6 @@ document.addEventListener('DOMContentLoaded', function () {
         selectCity(city);
     });
 
-    // 点击外部关闭建议列表
-    document.addEventListener('click', function (e) {
-        if (!citySearchInput.contains(e.target) && !citySuggestions.contains(e.target)) {
-            citySuggestions.classList.remove('active');
-        }
-    });
-
     // 选择城市
     function selectCity(city) {
         // 填充坐标
@@ -541,10 +583,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 更新最近城市显示
     function updateNearestCity() {
-        const lat = parseFloat(latitudeInput.value);
-        const lon = parseFloat(longitudeInput.value);
+        const lat = isDMSFormat ? parseDMS(latitudeInput.value) : parseFloat(latitudeInput.value);
+        const lon = isDMSFormat ? parseDMS(longitudeInput.value) : parseFloat(longitudeInput.value);
 
-        if (isNaN(lat) || isNaN(lon)) {
+        if (lat === null || lon === null || Number.isNaN(lat) || Number.isNaN(lon)) {
             nearestCityText.textContent = t('nearestCity');
             return;
         }
@@ -553,6 +595,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (result && result.city) {
             const distanceStr = formatDistance(result.distance);
             nearestCityText.textContent = `${result.city.name} (${result.city.nameEn}) - ${distanceStr}`;
+        } else {
+            nearestCityText.textContent = t('nearestCity');
         }
     }
 
@@ -565,23 +609,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleCoordinateFormat() {
         if (isDMSFormat) {
             // DMS → 十进制
-            convertDMSToDecimal();
-            formatText.textContent = '切换为度分秒';
+            const converted = convertDMSToDecimal();
+            if (!converted) return;
             isDMSFormat = false;
-
-            // 更新标签显示当前格式
-            document.querySelector('label[for="latitude"]').textContent = '纬度 (°)';
-            document.querySelector('label[for="longitude"]').textContent = '经度 (°)';
         } else {
             // 十进制 → DMS
-            convertDecimalToDMS();
-            formatText.textContent = '切换为十进制';
+            const converted = convertDecimalToDMS();
+            if (!converted) return;
             isDMSFormat = true;
-
-            // 更新标签显示当前格式
-            document.querySelector('label[for="latitude"]').textContent = '纬度 (DMS)';
-            document.querySelector('label[for="longitude"]').textContent = '经度 (DMS)';
         }
+
+        refreshCoordinateUI();
+        updateNearestCity();
     }
 
     // 十进制 → DMS
@@ -590,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const lon = parseFloat(longitudeInput.value);
 
         if (isNaN(lat) || isNaN(lon)) {
-            return;
+            return false;
         }
 
         // 保存当前十进制值
@@ -613,64 +652,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         latitudeInput.value = latDMS;
         longitudeInput.value = lonDMS;
+        return true;
     }
 
     // DMS → 十进制
     function convertDMSToDecimal() {
-        // 恢复保存的十进制值
-        if (currentLatDMS !== null && currentLonDMS !== null) {
-            // 先恢复输入框类型和属性
-            latitudeInput.type = 'number';
-            longitudeInput.type = 'number';
-            latitudeInput.setAttribute('step', '0.0001');
-            longitudeInput.setAttribute('step', '0.0001');
-            latitudeInput.setAttribute('min', '-90');
-            longitudeInput.setAttribute('min', '-180');
-            latitudeInput.setAttribute('max', '90');
-            longitudeInput.setAttribute('max', '180');
+        let latDecimal = parseDMS(latitudeInput.value);
+        let lonDecimal = parseDMS(longitudeInput.value);
 
-            // 再设置值
-            latitudeInput.value = currentLatDMS.toFixed(4);
-            longitudeInput.value = currentLonDMS.toFixed(4);
-        }
-    }
-
-    // 重写计算函数以支持DMS格式
-    const originalCalculateAndDisplay = calculateAndDisplay;
-    calculateAndDisplay = function () {
-        // 如果是DMS格式,先转换为十进制
-        if (isDMSFormat) {
-            const latDMS = latitudeInput.value;
-            const lonDMS = longitudeInput.value;
-
-            const lat = parseDMS(latDMS);
-            const lon = parseDMS(lonDMS);
-
-            if (lat === null || lon === null) {
-                showError('DMS格式错误,请使用格式: 35°30\'00"N');
-                return;
+        // 如果当前输入无法解析,回退到最近一次保存的十进制值
+        if (latDecimal === null || lonDecimal === null) {
+            if (currentLatDMS === null || currentLonDMS === null) {
+                return false;
             }
-
-            // 临时保存DMS值
-            const tempLatDMS = latDMS;
-            const tempLonDMS = lonDMS;
-
-            // 临时切换为十进制进行计算
-            latitudeInput.type = 'number';
-            longitudeInput.type = 'number';
-            latitudeInput.value = lat;
-            longitudeInput.value = lon;
-
-            // 执行计算
-            originalCalculateAndDisplay();
-
-            // 恢复DMS显示
-            latitudeInput.type = 'text';
-            longitudeInput.type = 'text';
-            latitudeInput.value = tempLatDMS;
-            longitudeInput.value = tempLonDMS;
+            latDecimal = currentLatDMS;
+            lonDecimal = currentLonDMS;
         } else {
-            originalCalculateAndDisplay();
+            currentLatDMS = latDecimal;
+            currentLonDMS = lonDecimal;
         }
-    };
+
+        latitudeInput.type = 'number';
+        longitudeInput.type = 'number';
+        latitudeInput.setAttribute('step', '0.0001');
+        longitudeInput.setAttribute('step', '0.0001');
+        latitudeInput.setAttribute('min', '-90');
+        longitudeInput.setAttribute('min', '-180');
+        latitudeInput.setAttribute('max', '90');
+        longitudeInput.setAttribute('max', '180');
+
+        latitudeInput.value = latDecimal.toFixed(4);
+        longitudeInput.value = lonDecimal.toFixed(4);
+        return true;
+    }
 });
