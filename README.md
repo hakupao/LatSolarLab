@@ -1,52 +1,49 @@
 # LatSolarLab
 
-Latitude Solar Radiation Calculator / 纬度太阳辐射计算器
+Latitude solar radiation calculator with a live 3D globe.
 
-计算地球上任意位置在任意日期的太阳辐射量, 并在 3D 地球上联动展示。DMS/十进制坐标切换、双语界面、最近城市提示和地点/日期对比模式均已开箱可用。
+## What it does
+- Solar radiation: computes day-of-year, declination, daylight hours, TOA daily radiation, and net absorption; handles polar night/day.
+- Modes: single point, compare locations, compare dates.
+- Coordinates: decimal <-> DMS toggle, nearest-city hint, quick example presets.
+- Search: local city database plus Nominatim fallback; optional Google Geocoding if an API key is provided.
+- Globe: Three.js + Globe.gl renders a dot/hex style earth or a texture skin; globe focuses on the selected point and lights according to date.
+- UX: bilingual (EN/zh), responsive layout, glassy cards on a dark solid background.
 
----
+## Globe.gl note
+The 3D earth is built with Globe.gl layered on Three.js. Two visual styles are exposed (hex dots vs. texture). Camera focus, atmosphere color, and light direction update when you select a location or change the date so the globe stays in sync with calculations.
+We borrow the excellent Globe.gl project here: https://github.com/vasturiano/globe.gl
 
-## Features / 功能
-- UI/UX: 深色星空渐变统一了 3D 地球与左侧面板背景, 顶部按钮可切换地球样式/语言, 玻璃拟物卡片提升可读性。
-- Solar radiation: TOA 日总辐射与净吸收计算, 支持极昼/极夜提示。
-- Dual coordinate formats: 十进制与度分秒互转, 示例按钮与最近城市均支持 DMS。
-- Globe: Three.js + Globe.gl, 可聚焦选定地点并根据日期模拟太阳方向, 提供 Hex/Texture 两种皮肤。
-- Geocoding: 本地城市库 + Nominatim 免费 API, 配置密钥后可切换 Google。
-- I18n & responsive: 中英文双语, 动态文本与格式切换同步更新, 适配桌面与移动端。
-
-## Setup / 安装
-1) 克隆仓库 / Clone  
+## Getting started
 ```bash
 git clone https://github.com/yourusername/LatSolarLab.git
 cd LatSolarLab
 ```
 
-2) 配置 API 密钥 (可选)  
-- 默认使用免费 OSM Nominatim, 无需密钥。  
-- 若需 Google Geocoding, 复制 `config.example.js` 为 `config.js` 并填写 `GOOGLE_API_KEY`，或在构建时注入环境变量：  
+### Configure geocoding (optional)
+- Default: OSM Nominatim, no key needed.
+- Google: copy `config.example.js` to `config.js` and set `GOOGLE_API_KEY`, or generate it:
 ```bash
 GOOGLE_API_KEY=your_key node generate-config.js
 ```
-> 生产环境不要提交真实密钥；`config.js` 已列入 `.gitignore`。
+Do not commit real keys. `config.js` is git-ignored.
 
-3) 本地运行  
-- 直接双击 `index.html`，或使用本地服务器（贴图加载更稳定）：  
+### Run locally
+This is a static site. Open `index.html` directly, or serve for better asset loading:
 ```bash
 npx http-server .
 ```
 
-## Deployment / 部署
-- 适用于静态托管 (Cloudflare Pages / Vercel / GitHub Pages)。  
-- Cloudflare Pages 示例:  
-  - Build Command: `node generate-config.js`  
-  - Build Output: `.`  
-  - Env: `GOOGLE_API_KEY` (可选, 留空则自动回退 OSM)
+### Deploy
+Works on any static host (Cloudflare Pages, Vercel, GitHub Pages). Example for Cloudflare Pages:
+- Build Command: `node generate-config.js`
+- Build Output: `.`
+- Env: `GOOGLE_API_KEY` (optional; empty falls back to Nominatim)
 
-## Notes / 说明
-- DMS 输入错误会提示并阻止计算，避免错误数据进入模型。  
-- 最近城市、示例按钮与 3D 聚焦均使用解析后的经纬度，保持一致性。  
-- 如果缺失外部依赖 (Globe.gl/Three), 相关功能会优雅降级而不阻塞页面。  
-- 仓库当前包含示例 `config.js`；请使用 `config.example.js` 或 `generate-config.js` 写入自己的密钥，避免在公开环境提交真实 key。
+## Notes
+- DMS validation prevents bad coordinates from entering the model.
+- Nearest-city display and globe focus both use parsed coordinates for consistency.
+- If Globe.gl/Three.js fail to load, the rest of the page continues to work (graceful degradation).
 
 ## License
-MIT License. See [LICENSE](LICENSE) file for details.
+MIT. See `LICENSE`.
