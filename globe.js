@@ -7,8 +7,32 @@ let world;
 let globeContainer;
 let sunLight;
 
+
+let currentStyle = 'hex'; // 'hex' or 'texture'
+let cachedCountriesData = null;
+const SPACE_BACKGROUND = '#050914';
+
+// Styles configuration
+const STYLES = {
+    hex: {
+        globeImageUrl: 'https://unpkg.com/three-globe/example/img/earth-dark.jpg',
+        backgroundColor: SPACE_BACKGROUND,
+        atmosphereColor: '#2fa0ff',
+        atmosphereAltitude: 0.22,
+        polygonColor: () => `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
+    },
+    texture: {
+        globeImageUrl: 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+        backgroundColor: SPACE_BACKGROUND, // Stick to dark background
+        atmosphereColor: '#75c3ff', // Lighter atmosphere for realistic view
+        atmosphereAltitude: 0.14,
+        polygonColor: () => 'rgba(0,0,0,0)' // Transparent polygons
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     initGlobe();
+    setupStyleToggle();
 });
 
 function initGlobe() {
@@ -17,57 +41,33 @@ function initGlobe() {
         return;
     }
 
-    // 初始化地球
+    // Initialize Globe instance
     world = Globe()
         (globeContainer)
-        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
-        .backgroundColor('#000011') // 恢复深空蓝背景，避免全黑无法分辨
-        .showAtmosphere(true)
-        .atmosphereColor('#3a228a')
-        .atmosphereAltitude(0.25)
-        .pointOfView({ lat: 35.6762, lng: 139.6503, altitude: 2.5 }, 1000);
+        .showAtmosphere(true);
 
-    // 加载地图数据
-    // 使用 deck.gl 的稳定 CDN 源 (Natural Earth 110m)
-    fetch('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_countries.geojson')
-        .then(res => {
-            if (!res.ok) throw new Error('Network response was not ok');
-            return res.json();
-        })
-        .then(countries => {
-            world
-                .hexPolygonsData(countries.features)
-                .hexPolygonResolution(3)
-                .hexPolygonMargin(0.3)
-                .hexPolygonUseDots(true)
-                .hexPolygonColor(() => {
-                    // 随机亮色
-                    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
-                })
-                .hexPolygonAltitude(0.01);
-        })
-        .catch(err => {
-            console.error("Failed to load globe data:", err);
-            // 失败时的回退：尝试加载 TopoJSON
-            fallbackToTopoJSON();
-        });
+    // Apply initial style
+    updateGlobeStyle(currentStyle);
 
-    function fallbackToTopoJSON() {
-        console.log("Falling back to TopoJSON...");
-        fetch('https://unpkg.com/world-atlas/countries-110m.json')
-            .then(res => res.json())
-            .then(landTopology => {
-                const countries = topojson.feature(landTopology, landTopology.objects.countries).features;
-                world.hexPolygonsData(countries)
-                    .hexPolygonResolution(3)
-                    .hexPolygonMargin(0.3)
-                    .hexPolygonUseDots(true)
-                    .hexPolygonColor(() => `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`)
-                    .hexPolygonAltitude(0.01);
-            });
-    }
+    // Initial View
+    world.pointOfView({ lat: 35.6762, lng: 139.6503, altitude: 2.5 }, 1000);
 
-    // 基础光照
+    // Load Data
+    loadCountryData();
+
+    // Setup resize handler
+    const resizeGlobe = () => {
+        if (!globeContainer || !world) return;
+        world.width(globeContainer.clientWidth);
+        world.height(globeContainer.clientHeight);
+    };
+    window.addEventListener('resize', resizeGlobe);
+    setTimeout(resizeGlobe, 100);
+
+    // Initial sun position
+    updateSunPosition(new Date());
+
+    // Basic Lighting
     const scene = world.scene ? world.scene() : null;
     if (scene && window.THREE) {
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
@@ -79,28 +79,90 @@ function initGlobe() {
         scene.add(sunLight);
     }
 
-    // ===== 禁用交互 =====
+    // Initial controls setup
     const controls = world.controls();
     if (controls) {
         controls.enableZoom = false;
         controls.enableRotate = false;
         controls.enablePan = false;
     }
+}
 
-    // 设置容器大小随窗口变化
-    const resizeGlobe = () => {
-        if (!globeContainer || !world) return;
-        world.width(globeContainer.clientWidth);
-        world.height(globeContainer.clientHeight);
-    };
+function loadCountryData() {
+    // Use stable CDN source
+    fetch('https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_countries.geojson')
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
+        .then(countries => {
+            cachedCountriesData = countries.features;
+            // Apply data immediately, visibility is controlled by style
+            applyHexPolygons(cachedCountriesData);
+        })
+        .catch(err => {
+            console.error("Failed to load globe data:", err);
+            fallbackToTopoJSON();
+        });
+}
 
-    window.addEventListener('resize', resizeGlobe);
+function fallbackToTopoJSON() {
+    console.log("Falling back to TopoJSON...");
+    fetch('https://unpkg.com/world-atlas/countries-110m.json')
+        .then(res => res.json())
+        .then(landTopology => {
+            const countries = topojson.feature(landTopology, landTopology.objects.countries).features;
+            cachedCountriesData = countries;
+            // Apply data immediately, visibility is controlled by style
+            applyHexPolygons(cachedCountriesData);
+        });
+}
 
-    // 初始调整大小
-    setTimeout(resizeGlobe, 100);
+function applyHexPolygons(data) {
+    if (!world || !data) return;
+    world.hexPolygonsData(data)
+        .hexPolygonResolution(3)
+        .hexPolygonMargin(0.3)
+        .hexPolygonUseDots(true)
+        .hexPolygonColor(STYLES[currentStyle].polygonColor)
+        .hexPolygonAltitude(0.01);
+}
 
-    // 初次设定太阳位置
-    updateSunPosition(new Date());
+function updateGlobeStyle(style) {
+    if (!world) return;
+
+    const config = STYLES[style];
+    world.globeImageUrl(config.globeImageUrl)
+        .backgroundColor(config.backgroundColor)
+        .atmosphereColor(config.atmosphereColor)
+        .atmosphereAltitude(config.atmosphereAltitude);
+
+    // Update polygon color based on style
+    // If data is already loaded, this will just update the color (transparent or visible)
+    // without reloading the geometry
+    world.hexPolygonColor(config.polygonColor);
+}
+
+function setupStyleToggle() {
+    const toggleBtn = document.getElementById('style-toggle');
+    const styleText = document.getElementById('style-text');
+    const styleIcon = toggleBtn.querySelector('.control-icon');
+
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+        currentStyle = currentStyle === 'hex' ? 'texture' : 'hex';
+        updateGlobeStyle(currentStyle);
+
+        // Update Button UI
+        if (currentStyle === 'hex') {
+            styleText.textContent = 'Texture'; // Button says what it SWITCHES TO
+            styleIcon.textContent = '🗺️';
+        } else {
+            styleText.textContent = 'Hex Style';
+            styleIcon.textContent = '🔷';
+        }
+    });
 }
 
 /**

@@ -7,12 +7,12 @@ Latitude Solar Radiation Calculator / 纬度太阳辐射计算器
 ---
 
 ## Features / 功能
+- UI/UX: 深色星空渐变统一了 3D 地球与左侧面板背景, 顶部按钮可切换地球样式/语言, 玻璃拟物卡片提升可读性。
 - Solar radiation: TOA 日总辐射与净吸收计算, 支持极昼/极夜提示。
 - Dual coordinate formats: 十进制与度分秒互转, 示例按钮与最近城市均支持 DMS。
+- Globe: Three.js + Globe.gl, 可聚焦选定地点并根据日期模拟太阳方向, 提供 Hex/Texture 两种皮肤。
 - Geocoding: 本地城市库 + Nominatim 免费 API, 配置密钥后可切换 Google。
-- I18n: 中英文双语, 动态文本与格式切换同步更新。
-- Visualization: Three.js + Globe.gl 背景地球, 聚焦选定地点并模拟太阳方向。
-- Responsive: 适配桌面与移动端。
+- I18n & responsive: 中英文双语, 动态文本与格式切换同步更新, 适配桌面与移动端。
 
 ## Setup / 安装
 1) 克隆仓库 / Clone  
@@ -45,7 +45,8 @@ npx http-server .
 ## Notes / 说明
 - DMS 输入错误会提示并阻止计算，避免错误数据进入模型。  
 - 最近城市、示例按钮与 3D 聚焦均使用解析后的经纬度，保持一致性。  
-- 如果缺失外部依赖 (Globe.gl/Three), 相关功能会优雅降级而不阻塞页面。
+- 如果缺失外部依赖 (Globe.gl/Three), 相关功能会优雅降级而不阻塞页面。  
+- 仓库当前包含示例 `config.js`；请使用 `config.example.js` 或 `generate-config.js` 写入自己的密钥，避免在公开环境提交真实 key。
 
 ## License
 MIT License. See [LICENSE](LICENSE) file for details.

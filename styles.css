@@ -9,8 +9,10 @@
 /* 全局重置和变量 */
 :root {
     /* 颜色主题 - 太阳和天空 */
-    --color-bg-dark: #0a0e27;
+    --color-bg-dark: #050914;
+    --gradient-space: #050914;
     --color-bg-card: rgba(255, 255, 255, 0.05);
+    --color-bg-panel: rgba(7, 11, 26, 0.9);
     --color-bg-input: rgba(255, 255, 255, 0.08);
     --color-border: rgba(255, 255, 255, 0.1);
 
@@ -62,7 +64,6 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--color-bg-dark);
-    /* 纯色背景,让地球背景负责渐变 */
     color: var(--color-text-primary);
     min-height: 100vh;
     line-height: 1.6;
@@ -80,7 +81,13 @@ body {
     width: 60%;
     height: 100vh;
     z-index: 0;
-    background: radial-gradient(70% 70% at 80% 20%, rgba(56, 189, 248, 0.12), rgba(8, 15, 30, 0.9));
+    background: transparent;
+    isolation: isolate; /* keep canvas on top of background layer */
+}
+
+#globe-container canvas {
+    position: relative;
+    z-index: 1;
 }
 
 /* 容器 (左侧面板) */
@@ -90,24 +97,28 @@ body {
     max-width: 600px;
     margin: 0;
     padding: var(--spacing-md);
-    background: rgba(10, 14, 39, 0.85);
+    background: var(--color-bg-panel);
     /* 半透明背景 */
     backdrop-filter: blur(10px);
-    z-index: 10;
+    z-index: 2;
     min-height: 100vh;
     border-right: 1px solid var(--color-border);
     position: relative;
 }
 
-/* 语言切换按钮 */
-.language-toggle {
+/* 顶部控制栏 (语言切换 + 地球样式切换) */
+.top-controls {
     position: fixed;
     top: var(--spacing-md);
     right: var(--spacing-md);
     z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-end;
 }
 
-.lang-btn {
+.control-btn {
     background: var(--color-bg-card);
     backdrop-filter: blur(10px);
     border: 1px solid var(--color-border);
@@ -122,9 +133,11 @@ body {
     font-size: 0.875rem;
     color: var(--color-text-secondary);
     box-shadow: var(--shadow-sm);
+    min-width: 110px;
+    justify-content: center;
 }
 
-.lang-btn:hover {
+.control-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--color-primary);
     color: var(--color-primary-light);
@@ -132,11 +145,12 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-.lang-icon {
+.control-icon {
     font-size: 1.1rem;
 }
 
-#lang-text {
+#lang-text,
+#style-text {
     font-weight: 500;
 }
 
@@ -757,12 +771,12 @@ footer {
         justify-content: center;
     }
 
-    .language-toggle {
+    .top-controls {
         top: var(--spacing-sm);
         right: var(--spacing-sm);
     }
 
-    .lang-btn {
+    .control-btn {
         padding: 0.5rem 0.75rem;
         font-size: 0.8rem;
     }
