@@ -40,6 +40,9 @@ Works on any static host (Cloudflare Pages, Vercel, GitHub Pages). Example for C
 - Build Output: `.`
 - Env: `GOOGLE_API_KEY` (optional; empty falls back to Nominatim)
 
+Live site: https://solar.bojiang.org/
+Repository: https://github.com/hakupao/LatSolarLab
+
 ## Notes
 - DMS validation prevents bad coordinates from entering the model.
 - Nearest-city display and globe focus both use parsed coordinates for consistency.
